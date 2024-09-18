@@ -1,4 +1,5 @@
 using FF.Drawing;
+using FF.WarehouseData;
 
 namespace FF
 {
@@ -8,8 +9,13 @@ namespace FF
         {
             InitializeComponent();
 
-            var drawingService = new DrawingService(WarehousePictureBox.Width, WarehousePictureBox.Height);
+            Consts.PictureBoxWidth = WarehousePictureBox.Width;
+            Consts.PictureBoxHeight = WarehousePictureBox.Height;
+            
+            var drawingService = new DrawingService(Consts.PictureBoxWidth, Consts.PictureBoxHeight);
             WarehousePictureBox.Image = drawingService.DrawWarehouse();
+
+            var topoly = WarehouseTopology.Topology;
         }
 
         private void OptimizedButton_Click(object sender, EventArgs e)
