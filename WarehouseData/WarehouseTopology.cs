@@ -15,21 +15,19 @@ public static class WarehouseTopology
 
         for (int row = 0; row < Consts.RowsCount; row++)
         {
-            var currentYBorder = row * heightPerRow;
+            var yCenter = row * heightPerRow + heightPerRow / 2;
 
             for (int column = 0; column < Consts.ColumnsCount; column++)
             {
-                var currentXBorder = column * widthPerColumn;
+                var xCenter = column * widthPerColumn + widthPerColumn / 2 ;
                 
                 if (column % 2 == 1 && row != 0 && row != 11 && row != 22)
                 {
-                    Topology[row, column] = new WarehouseNode(NodeType.RackCell,
-                        new(currentXBorder + widthPerColumn / 2, currentYBorder + heightPerRow / 2));
+                    Topology[row, column] = new WarehouseNode(NodeType.RackCell, new(xCenter, yCenter));
                     continue;
                 }
                 
-                Topology[row, column] = new WarehouseNode(NodeType.EmptyCell,
-                    new(currentXBorder + widthPerColumn / 2, currentYBorder + heightPerRow / 2));
+                Topology[row, column] = new WarehouseNode(NodeType.EmptyCell, new(xCenter, yCenter));
             }
         }
     }

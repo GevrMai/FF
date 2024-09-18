@@ -11,9 +11,6 @@ public class DrawingService
     private readonly int _width;
     private readonly int _height;
     
-    //private const int RowsNumber = 23;
-    //private const int ColumnsNumber = 7;
-    
     public DrawingService(int width, int height)
     {
         _width = width;
