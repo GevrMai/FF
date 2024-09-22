@@ -1,3 +1,6 @@
+using FF.Picking;
+using FF.WarehouseData;
+
 namespace FF.Drawing;
 
 public class DrawingService
@@ -5,29 +8,30 @@ public class DrawingService
     private readonly Pen _whitePen;
     private readonly SolidBrush _redBrush;
     private readonly SolidBrush _greenBrush;
-    private readonly Bitmap _bitmap;
-    private readonly Graphics _graphics;
-
-    private readonly int _width;
-    private readonly int _height;
+    private readonly SolidBrush _yellowBrush;
+    private readonly Font _font;
+    public Bitmap Bitmap;
+    private Graphics _graphics;
     
-    public DrawingService(int width, int height)
+    public event EventHandler BitmapChanged;
+    
+    public DrawingService()
     {
-        _width = width;
-        _height = height;
-        
         _whitePen = new Pen(Color.FromKnownColor(KnownColor.White), 2);
         _redBrush = new SolidBrush(Color.Red);
         _greenBrush = new SolidBrush(Color.Green);
-        _bitmap = new Bitmap(_width, _height);
+        _yellowBrush = new SolidBrush(Color.Yellow);
+        _font = new Font("Century Gothic", 14.25F, FontStyle.Bold);
         
-        _graphics = Graphics.FromImage(_bitmap);
+        Bitmap = new Bitmap(Consts.PictureBoxWidth, Consts.PictureBoxHeight);
+        
+        _graphics = Graphics.FromImage(Bitmap);
     }
     
     public Bitmap DrawWarehouse()
     {
-        var widthPerColumn = _width / Consts.ColumnsCount;
-        var heightPerRow = _height / Consts.RowsCount;
+        var widthPerColumn = Consts.PictureBoxWidth / Consts.ColumnsCount;
+        var heightPerRow = Consts.PictureBoxHeight / Consts.RowsCount;
 
         for (int row = 0; row < Consts.RowsCount; row++)
         {
@@ -51,6 +55,54 @@ public class DrawingService
             }
         }
 
-        return _bitmap;
+        return Bitmap;
+    }
+
+    public void DrawText(string text, int x, int y)
+    {
+        _graphics.DrawString(text, _font, _yellowBrush, x, y);
+    }
+
+    public async Task DrawNextStep(List<Picker> pickers)
+    {
+        Bitmap = new Bitmap(Consts.PictureBoxWidth, Consts.PictureBoxHeight);
+        _graphics = Graphics.FromImage(Bitmap);
+
+        DrawWarehouse();
+        var widthPerColumn = Consts.PictureBoxWidth / Consts.ColumnsCount;
+        var heightPerRow = Consts.PictureBoxHeight / Consts.RowsCount;
+
+        for (int row = 0; row < Consts.RowsCount; row++)
+        {
+            var yCenter = row * heightPerRow + heightPerRow / 2;
+        
+            for (int column = 0; column < Consts.ColumnsCount; column++)
+            {
+                var xCenter = column * widthPerColumn + widthPerColumn / 2;
+                if (WarehouseTopology.CellIsRack(row, column))
+                {
+                    var cellNumber = row * Consts.ColumnsCount + column;
+                    DrawText(cellNumber.ToString(), xCenter + 10, yCenter - 5);
+                }
+            }
+        }
+        
+        foreach (var picker in pickers)
+        {
+            var location = CoordinatesHelper.GetCellCenterCoordinates(picker.CurrentCellId);
+            var xCenter = location.X + 10;
+            var yCenter = location.Y - 5;
+            DrawText(picker.Id.ToString(), xCenter, yCenter);
+        }
+            
+        BitmapChanged.Invoke(this, EventArgs.Empty);
+        
+        GC.Collect();
+
+        await Task.Delay(1500);
     }
 }
+
+//TODO заюзать CoordinatesHelper где надо
+//TODO id rack проставлять в DrawWarehouse
+//TODO порефачить

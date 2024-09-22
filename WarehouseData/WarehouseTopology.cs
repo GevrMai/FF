@@ -1,21 +1,36 @@
+using FF.Drawing;
+using FF.Picking;
+
 namespace FF.WarehouseData;
 
-public static class WarehouseTopology
+public class WarehouseTopology
 {
-    static WarehouseTopology()
+    private readonly DrawingService _drawingService;
+    public List<Picker> Pickers;
+    private Random _rnd;
+    
+    public readonly int DistancesMatrixDim = Consts.RowsCount * Consts.ColumnsCount;
+
+    public readonly WarehouseNode[,] Topology;
+    public readonly int[,] DistancesMatrix;
+    
+    public WarehouseTopology(DrawingService drawingService)
     {
+        _drawingService = drawingService;
+        
+        DistancesMatrix = new int[DistancesMatrixDim, DistancesMatrixDim];
+        Topology = new WarehouseNode[Consts.RowsCount, Consts.ColumnsCount];
+        _rnd = new Random();
+        
         var setUpTopologyTask = Task.Run(SetUpTopology);
         var setUpDistancesMatrixTask = Task.Run(SetUpDistancesMatrix);
 
-        Task.WhenAll(setUpTopologyTask, setUpDistancesMatrixTask);
+        Task.WaitAll(setUpTopologyTask, setUpDistancesMatrixTask);
+        
+        WithPickersCount(1);
     }
 
-    public static readonly int DistancesMatrixDim = Consts.RowsCount * Consts.ColumnsCount;
-
-    public static readonly WarehouseNode[,] Topology = new WarehouseNode[Consts.RowsCount, Consts.ColumnsCount];
-    public static readonly int[,] DistancesMatrix = new int[DistancesMatrixDim, DistancesMatrixDim];
-
-    private static Task SetUpTopology()
+    private Task SetUpTopology()
     {
         var widthPerColumn = Consts.PictureBoxWidth / Consts.ColumnsCount;
         var heightPerRow = Consts.PictureBoxHeight / Consts.RowsCount;
@@ -28,25 +43,29 @@ public static class WarehouseTopology
             {
                 var xCenter = column * widthPerColumn + widthPerColumn / 2;
 
-                SetTopology(row, column, xCenter, yCenter);
+                SetCellType(row, column, xCenter, yCenter);
             }
         }
 
         return Task.CompletedTask;
     }
 
-    private static void SetTopology(int row, int column, int xCenter, int yCenter)
+    private void SetCellType(int row, int column, int xCenter, int yCenter)
     {
         if (CellIsRack(row, column))
         {
             Topology[row, column] = new WarehouseNode(NodeType.RackCell, new(xCenter, yCenter));
+
+            var cellNumber = row * Consts.ColumnsCount + column;
+            _drawingService.DrawText(cellNumber.ToString(), xCenter + 10, yCenter - 5);
+            
             return; 
         }
                 
         Topology[row, column] = new WarehouseNode(NodeType.EmptyCell, new(xCenter, yCenter));
     }
     
-    private static Task SetUpDistancesMatrix()
+    private Task SetUpDistancesMatrix()
     {
         for (int row = 0; row < Consts.RowsCount; row++)
         {
@@ -77,8 +96,57 @@ public static class WarehouseTopology
         return Task.CompletedTask;
     }
     
-    private static bool CellIsRack(int row, int column)
+    public static bool CellIsRack(int row, int column)
     {
         return column % 2 == 1 && row != 0 && row != 11 && row != 22;
+    }
+    
+    private void WithPickersCount(int count)
+    {
+        Pickers = new List<Picker>(count);
+
+        var emptyCellsIds = GetEmptyCells().ToList();
+        
+        for (int i = 1; i <= count; i++)
+        {
+            var cell = emptyCellsIds[_rnd.Next(0, emptyCellsIds.Count)];
+            Pickers.Add(new(
+                Id: i,
+                MaxWeight: Consts.MaxWeight)
+                {
+                    CurrentCellId = cell.cellId,
+                    Coordinates = new(cell.xCenter, cell.yCenter)
+                } );
+            _drawingService.DrawText(i.ToString(), cell.xCenter + 10, cell.yCenter - 5);
+        }
+    }
+
+    public IEnumerable<int> GetRackCellIds()
+    {
+        for (int row = 0; row < Consts.RowsCount; row++)
+        {
+            for (int column = 0; column < Consts.ColumnsCount; column++)
+            {
+                if (Topology[row, column].Type == NodeType.RackCell)
+                {
+                    yield return row * Consts.ColumnsCount + column;
+                }
+            }
+        }
+    }
+    
+    public IEnumerable<(int cellId, int xCenter, int yCenter)> GetEmptyCells()
+    {
+        for (int row = 0; row < Consts.RowsCount; row++)
+        {
+            for (int column = 0; column < Consts.ColumnsCount; column++)
+            {
+                var node = Topology[row, column];
+                if (node.Type == NodeType.EmptyCell)
+                {
+                    yield return new(row * Consts.ColumnsCount + column, node.Coordinates.CenterX, node.Coordinates.CenterY);
+                }
+            }
+        }
     }
 }

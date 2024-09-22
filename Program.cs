@@ -1,3 +1,9 @@
+using FF.Drawing;
+using FF.Picking;
+using FF.TasksData;
+using FF.WarehouseData;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace FF
 {
     internal static class Program
@@ -8,10 +14,25 @@ namespace FF
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            
+            var services = new ServiceCollection();  
+            ConfigureServices(services); 
+            
+            using ServiceProvider serviceProvider = services.BuildServiceProvider();
+            Application.Run(
+                serviceProvider.GetRequiredService<Form1>()
+                );  
+        }
+        
+        private static void ConfigureServices(ServiceCollection services)
+        {
+            services.AddScoped<Form1>();
+            services.AddSingleton<TaskService>();
+            services.AddSingleton<WarehouseTopology>();
+            services.AddSingleton<DrawingService>();
+            services.AddSingleton<DefaultPicking>();
+            services.AddSingleton<PathFinder>();
         }
     }
 }

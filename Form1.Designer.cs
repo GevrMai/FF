@@ -33,6 +33,7 @@
             AcceptDelayButton = new Button();
             PickingTypeLabel = new Label();
             DelayTextBox = new TextBox();
+            StatusLabel = new Label();
             WarehousePictureBox = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)WarehousePictureBox).BeginInit();
             SuspendLayout();
@@ -104,14 +105,24 @@
             DelayTextBox.TextAlign = HorizontalAlignment.Center;
             DelayTextBox.TextChanged += DelayTextBox_TextChanged;
             // 
+            // StatusLabel
+            // 
+            StatusLabel.AutoSize = true;
+            StatusLabel.BackColor = Color.Crimson;
+            StatusLabel.Location = new Point(396, 62);
+            StatusLabel.Name = "StatusLabel";
+            StatusLabel.Size = new Size(66, 23);
+            StatusLabel.TabIndex = 6;
+            StatusLabel.Text = "Wait...";
+            // 
             // WarehousePictureBox
             // 
             WarehousePictureBox.BackColor = Color.Navy;
             WarehousePictureBox.Cursor = Cursors.No;
             WarehousePictureBox.Location = new Point(23, 119);
             WarehousePictureBox.Name = "WarehousePictureBox";
-            WarehousePictureBox.Size = new Size(2529, 1290);
-            WarehousePictureBox.TabIndex = 5;
+            WarehousePictureBox.Size = new Size(2530, 1290);
+            WarehousePictureBox.TabIndex = 7;
             WarehousePictureBox.TabStop = false;
             // 
             // Form1
@@ -121,6 +132,7 @@
             BackColor = Color.MidnightBlue;
             ClientSize = new Size(2564, 1421);
             Controls.Add(WarehousePictureBox);
+            Controls.Add(StatusLabel);
             Controls.Add(DelayTextBox);
             Controls.Add(PickingTypeLabel);
             Controls.Add(AcceptDelayButton);
@@ -145,6 +157,7 @@
         private Button AcceptDelayButton;
         private Label PickingTypeLabel;
         private TextBox DelayTextBox;
-        public PictureBox WarehousePictureBox;
+        private Label StatusLabel;
+        private PictureBox WarehousePictureBox;
     }
 }
