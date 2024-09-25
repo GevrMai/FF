@@ -61,7 +61,7 @@ public class DefaultPicking
                 }
 
                 picker.DoNextStep();
-                Console.WriteLine($"picker {picker.Id} at pos {picker.CurrentCellId}");
+                //Console.WriteLine($"picker {picker.Id} at pos {picker.CurrentCellId}");
             }
 
             await _drawingService.DrawNextStep(_topology.Pickers);

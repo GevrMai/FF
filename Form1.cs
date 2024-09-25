@@ -54,10 +54,13 @@ namespace FF
             await _ctsOpt.CancelAsync();
             _ctsOpt = new CancellationTokenSource();
             
-            _taskService.GenerateTasks(5, 1, 5, 1, _ctsDefault);
+            
+            Task.Run(() =>
+            {
+                _taskService.GenerateTasks(5, 2, 5, 45_000, _ctsDefault);
+            });
             
             Console.WriteLine(_taskService.TasksQueue.Count);   // TODO убрать
-            
             
             Task.Run(() =>
             {

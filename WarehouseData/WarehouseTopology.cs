@@ -27,7 +27,7 @@ public class WarehouseTopology
 
         Task.WaitAll(setUpTopologyTask, setUpDistancesMatrixTask);
         
-        WithPickersCount(1);
+        WithPickersCount(2);
     }
 
     private Task SetUpTopology()
@@ -65,20 +65,36 @@ public class WarehouseTopology
         Topology[row, column] = new WarehouseNode(NodeType.EmptyCell, new(xCenter, yCenter));
     }
     
+    // Дистанция из/в шкаф будет задана слишком большой, чтобы путь в него был,
+    // но подборщику было выгоднее обойти шкаф, чем идти через него
     private Task SetUpDistancesMatrix()
     {
         for (int row = 0; row < Consts.RowsCount; row++)
         {
             for (int column = 0; column < Consts.ColumnsCount; column++)
             {
-                if (column != Consts.ColumnsCount - 1)   // можем вправо 
+                if (column != Consts.ColumnsCount - 1)  // можем вправо
                 {
-                    DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column + 1] = 1;
+                    if (!CellIsRack(row, column) && !CellIsRack(row, column + 1))   // свободная в свободную
+                    {
+                        DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column + 1] = 1;
+                    }
+                    else if (CellIsRack(row, column) || CellIsRack(row, column +1)) // из шкафа, в шкаф
+                    {
+                        DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column + 1] = 10_000;
+                    }
                 }
-
-                if (column != 0)    // можем влево
+                
+                if (column != 0)  // можем влево
                 {
-                    DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column - 1] = 1;
+                    if (!CellIsRack(row, column) && !CellIsRack(row, column - 1))   // свободная в свободную
+                    {
+                        DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column - 1] = 1;
+                    }
+                    else if (CellIsRack(row, column) || CellIsRack(row, column - 1)) // из шкафа, в шкаф
+                    {
+                        DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column - 1] = 10_000;
+                    }
                 }
                 
                 if (row != Consts.RowsCount - 1 && !CellIsRack(row, column) && !CellIsRack( row+1, column))    // можем вниз, текущая ячейка не шкаф, вниз не шкаф

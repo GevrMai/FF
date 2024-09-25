@@ -92,17 +92,18 @@ public class DrawingService
             var location = CoordinatesHelper.GetCellCenterCoordinates(picker.CurrentCellId);
             var xCenter = location.X + 10;
             var yCenter = location.Y - 5;
-            DrawText(picker.Id.ToString(), xCenter, yCenter);
+            DrawText($"{picker.Id}(>{picker.CurrentTaskCellId})", xCenter, yCenter);
         }
             
         BitmapChanged.Invoke(this, EventArgs.Empty);
         
         GC.Collect();
 
-        await Task.Delay(1500);
+        await Task.Delay(800);
     }
 }
 
 //TODO заюзать CoordinatesHelper где надо
 //TODO id rack проставлять в DrawWarehouse
+//TODO пофиксить баг с проходом сквозь ячейки
 //TODO порефачить

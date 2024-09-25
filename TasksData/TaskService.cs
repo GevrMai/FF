@@ -30,16 +30,20 @@ public class TaskService
         {
             if (cts.IsCancellationRequested)
             {
+                Console.WriteLine("CANCEL");
                 TasksQueue.Clear();
                 break;
             }
             
             for (int j = 0; j < tasksCountPerBatch; j++)
             {
+                Console.WriteLine("NEW TASKS!");
                 TasksQueue.Enqueue( new(rackCells[rnd.Next(0, rackCells.Count)], rnd.Next(1, maxWeightG) ));
             }
             
+            Console.WriteLine("SLEEPING");
             await Task.Delay(delayMs);
+            Console.WriteLine("AWAKE");
         }
     }
 }
