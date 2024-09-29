@@ -13,41 +13,29 @@ public class PathFinder
     
     public List<int> FindShortestPath(Picker picker)
     {
-        // Проверка на корректность входных данных
-        if (picker.CurrentCellId == picker.CurrentTaskCellId)
-            return new List<int> { picker.CurrentCellId };
+        var distances = new int[_topology.DistancesMatrix.GetLength(0)];
+        var previous = new int?[_topology.DistancesMatrix.GetLength(0)];
+        var visited = new bool[_topology.DistancesMatrix.GetLength(0)];
+        var queue = new PriorityQueue<int, int>();
 
-        // Инициализация
-        var distances = new int[_topology.DistancesMatrix.GetLength(0)]; // Массив расстояний от начальной точки
-        var previous = new int?[_topology.DistancesMatrix.GetLength(0)]; // Массив предшественников для реконструкции пути
-        var visited = new bool[_topology.DistancesMatrix.GetLength(0)]; // Массив посещенных вершин
-        var queue = new PriorityQueue<int, int>(); // Очередь с приоритетами (по расстоянию)
-
-        // Начальные значения для начальной вершины
         distances[picker.CurrentCellId] = 0;
         queue.Enqueue(picker.CurrentCellId, 0);
 
-        // Алгоритм Дейкстры
         while (queue.Count > 0)
         {
             var currentCellId = queue.Dequeue();
 
-            // Если достигли целевой вершины
             if (currentCellId == picker.CurrentTaskCellId)
                 break;
 
             visited[currentCellId] = true;
 
-            // Проход по соседям
             for (int i = 0; i < _topology.DistancesMatrix.GetLength(0); i++)
             {
-                // Если сосед не посещен и доступен для прохода
                 if (!visited[i] && _topology.DistancesMatrix[currentCellId, i] != 0)
                 {
-                    // Расстояние до соседа
                     var distanceToNeighbor = distances[currentCellId] + _topology.DistancesMatrix[currentCellId, i];
 
-                    // Если текущее расстояние до соседа меньше, чем предыдущее
                     if (distanceToNeighbor < distances[i] || distances[i] == 0)
                     {
                         distances[i] = distanceToNeighbor;
@@ -58,8 +46,45 @@ public class PathFinder
             }
         }
 
-        // Реконструкция пути
         return ReconstructPath(previous, picker.CurrentTaskCellId);
+    }
+    
+    public List<int> FindShortestPath(int from, int to)
+    {
+        var distances = new int[_topology.DistancesMatrix.GetLength(0)];
+        var previous = new int?[_topology.DistancesMatrix.GetLength(0)];
+        var visited = new bool[_topology.DistancesMatrix.GetLength(0)];
+        var queue = new PriorityQueue<int, int>();
+
+        distances[from] = 0;
+        queue.Enqueue(from, 0);
+
+        while (queue.Count > 0)
+        {
+            var currentCellId = queue.Dequeue();
+
+            if (currentCellId == to)
+                break;
+
+            visited[currentCellId] = true;
+
+            for (int i = 0; i < _topology.DistancesMatrix.GetLength(0); i++)
+            {
+                if (!visited[i] && _topology.DistancesMatrix[currentCellId, i] != 0)
+                {
+                    var distanceToNeighbor = distances[currentCellId] + _topology.DistancesMatrix[currentCellId, i];
+
+                    if (distanceToNeighbor < distances[i] || distances[i] == 0)
+                    {
+                        distances[i] = distanceToNeighbor;
+                        previous[i] = currentCellId;
+                        queue.Enqueue(i, distanceToNeighbor);
+                    }
+                }
+            }
+        }
+
+        return ReconstructPath(previous, to);
     }
 
     private List<int> ReconstructPath(int?[] previous, int? targetCellId)

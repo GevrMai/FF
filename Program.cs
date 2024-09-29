@@ -32,6 +32,7 @@ namespace FF
             services.AddSingleton<WarehouseTopology>();
             services.AddSingleton<DrawingService>();
             services.AddSingleton<DefaultPicking>();
+            services.AddSingleton<OptimizedPicking>();
             services.AddSingleton<PathFinder>();
         }
     }

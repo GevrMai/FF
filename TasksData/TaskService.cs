@@ -15,7 +15,7 @@ public class TaskService
         rnd = new();
     }
 
-    public ConcurrentQueue<TaskNode> TasksQueue = new ();
+    public readonly ConcurrentQueue<TaskNode> TasksQueue = new ();
     
     public async Task GenerateTasks(int tasksCountPerBatch, int numberOfTimes, int maxWeightG, int delayMs, CancellationTokenSource cts)
     {
@@ -30,20 +30,17 @@ public class TaskService
         {
             if (cts.IsCancellationRequested)
             {
-                Console.WriteLine("CANCEL");
                 TasksQueue.Clear();
                 break;
             }
             
             for (int j = 0; j < tasksCountPerBatch; j++)
             {
-                Console.WriteLine("NEW TASKS!");
                 TasksQueue.Enqueue( new(rackCells[rnd.Next(0, rackCells.Count)], rnd.Next(1, maxWeightG) ));
             }
             
-            Console.WriteLine("SLEEPING");
             await Task.Delay(delayMs);
-            Console.WriteLine("AWAKE");
         }
+        Console.WriteLine("Tasks ended");
     }
 }

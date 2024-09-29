@@ -11,6 +11,7 @@ namespace FF
         private readonly WarehouseTopology _topology;
         private readonly DrawingService _drawingService;
         private readonly DefaultPicking _defaultPicking;
+        private readonly OptimizedPicking _optimizedPicking;
 
         private CancellationTokenSource _ctsDefault;
         private CancellationTokenSource _ctsOpt;
@@ -18,13 +19,15 @@ namespace FF
             TaskService taskService,
             WarehouseTopology topology,
             DrawingService drawingService,
-            DefaultPicking defaultPicking)
+            DefaultPicking defaultPicking,
+            OptimizedPicking optimizedPicking)
         {
             _taskService = taskService;
             _topology = topology;
             _drawingService = drawingService;
             
             _defaultPicking = defaultPicking;
+            _optimizedPicking = optimizedPicking;
             
             InitializeComponent();
             
@@ -45,6 +48,16 @@ namespace FF
             DefaultButton.Enabled = true;
             await _ctsDefault.CancelAsync();
             _ctsDefault = new CancellationTokenSource();
+            
+            Task.Run(() =>
+            {
+                _taskService.GenerateTasks(5, 1, 1, 5_000, _ctsDefault);
+            });
+            
+            Task.Run(() =>
+            {
+                _optimizedPicking.StartProcess(_ctsDefault);
+            });
         }
 
         private async void DefaultButton_Click(object sender, EventArgs e)
@@ -57,14 +70,12 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(5, 2, 5, 45_000, _ctsDefault);
+                _taskService.GenerateTasks(8, 1, 1, 5_000, _ctsDefault);
             });
-            
-            Console.WriteLine(_taskService.TasksQueue.Count);   // TODO убрать
             
             Task.Run(() =>
             {
-                _defaultPicking.StartProccess(_ctsDefault);
+                _defaultPicking.StartProcess(_ctsDefault);
             });
         }
 

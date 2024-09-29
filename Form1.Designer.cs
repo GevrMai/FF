@@ -100,7 +100,7 @@
             DelayTextBox.MaxLength = 4;
             DelayTextBox.Name = "DelayTextBox";
             DelayTextBox.PlaceholderText = "Drawing delay | ms";
-            DelayTextBox.Size = new Size(280, 24);
+            DelayTextBox.Size = new Size(260, 24);
             DelayTextBox.TabIndex = 4;
             DelayTextBox.TextAlign = HorizontalAlignment.Center;
             DelayTextBox.TextChanged += DelayTextBox_TextChanged;
@@ -130,7 +130,7 @@
             AutoScaleDimensions = new SizeF(11F, 23F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.MidnightBlue;
-            ClientSize = new Size(2564, 1421);
+            ClientSize = new Size(2544, 1401);
             Controls.Add(WarehousePictureBox);
             Controls.Add(StatusLabel);
             Controls.Add(DelayTextBox);

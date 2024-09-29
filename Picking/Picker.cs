@@ -7,6 +7,8 @@ public record Picker(int Id, int MaxWeight)
     public int CurrentLoadKg;
     public List<int>? Path;
     public (int X, int Y) Coordinates;
+
+    public int PassedCells = 0;
     
     public bool CanCarry(int weightToCarry) => MaxWeight >= CurrentLoadKg + weightToCarry;
 
@@ -22,6 +24,7 @@ public record Picker(int Id, int MaxWeight)
             Path = default;
             return;
         }
+        PassedCells++;
         Path.RemoveAt(0);
         CurrentCellId = Path.First();
     }

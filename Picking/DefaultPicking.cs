@@ -4,13 +4,13 @@ using FF.WarehouseData;
 
 namespace FF.Picking;
 
-public class DefaultPicking
+public class DefaultPicking : IPicking
 {
     private readonly DrawingService _drawingService;
     private readonly TaskService _taskService;
     private readonly WarehouseTopology _topology;
     private readonly PathFinder _pathFinder;
-
+    
     public DefaultPicking(
         DrawingService drawingService,
         TaskService taskService,
@@ -23,22 +23,23 @@ public class DefaultPicking
         _pathFinder = pathFinder;
     }
 
-    public async Task StartProccess(CancellationTokenSource cts)
+    public async Task StartProcess(CancellationTokenSource cts)
     {
         if (!_topology.Pickers.Any())
         {
             throw new ArgumentException("There are no pickers");
         }
         
-        var retries = 0;
         while (true)
         {
             if (cts.IsCancellationRequested)
             {
+                Console.WriteLine(_topology.Pickers.Sum(x => x.PassedCells));
                 foreach (var picker in _topology.Pickers)
                 {
                     picker.CurrentTaskCellId = default;
                     picker.CurrentLoadKg = default;
+                    picker.PassedCells = 0;
                 }
                 break;
             }

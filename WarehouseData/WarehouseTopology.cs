@@ -27,7 +27,7 @@ public class WarehouseTopology
 
         Task.WaitAll(setUpTopologyTask, setUpDistancesMatrixTask);
         
-        WithPickersCount(2);
+        WithPickersCount(3);
     }
 
     private Task SetUpTopology()
