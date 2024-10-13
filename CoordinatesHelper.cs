@@ -22,4 +22,9 @@ public static class CoordinatesHelper
         
         return new(row, column);
     }
+
+    public static int GetCellId(int row, int column)
+    {
+        return row * Consts.ColumnsCount + column;
+    }
 }

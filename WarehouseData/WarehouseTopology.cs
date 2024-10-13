@@ -7,21 +7,22 @@ public class WarehouseTopology
 {
     private readonly DrawingService _drawingService;
     public List<Picker> Pickers;
-    private Random _rnd;
-    
-    public readonly int DistancesMatrixDim = Consts.RowsCount * Consts.ColumnsCount;
+    private readonly Random _rnd;
 
-    public readonly WarehouseNode[,] Topology;
+    private readonly int _distancesMatrixDim = Consts.RowsCount * Consts.ColumnsCount;
+
+    private readonly WarehouseNode[,] _topology;
     public readonly int[,] DistancesMatrix;
 
-    public static HashSet<int> ColumnsWithRacks = new() { 1, 2, 4, 5, 7, 8 };
+    public static readonly HashSet<int> ColumnsWithRacks = [1, 2, 4, 5, 7, 8];
+    public static readonly List<(int row, int column)> DropPointsCoordinates = new() { (0, 0), (Consts.RowsCount - 1, Consts.ColumnsCount - 1) };
     
     public WarehouseTopology(DrawingService drawingService)
     {
         _drawingService = drawingService;
         
-        DistancesMatrix = new int[DistancesMatrixDim, DistancesMatrixDim];
-        Topology = new WarehouseNode[Consts.RowsCount, Consts.ColumnsCount];
+        DistancesMatrix = new int[_distancesMatrixDim, _distancesMatrixDim];
+        _topology = new WarehouseNode[Consts.RowsCount, Consts.ColumnsCount];
         _rnd = new Random();
         
         var setUpTopologyTask = Task.Run(SetUpTopology);
@@ -29,7 +30,7 @@ public class WarehouseTopology
 
         Task.WaitAll(setUpTopologyTask, setUpDistancesMatrixTask);
         
-        WithPickersCount(5);
+        WithPickersCount(3);
     }
 
     private Task SetUpTopology()
@@ -56,7 +57,7 @@ public class WarehouseTopology
     {
         if (CellIsRack(row, column))
         {
-            Topology[row, column] = new WarehouseNode(NodeType.RackCell, new(xCenter, yCenter));
+            _topology[row, column] = new WarehouseNode(NodeType.RackCell, new(xCenter, yCenter));
 
             var cellNumber = row * Consts.ColumnsCount + column;
             _drawingService.DrawText(cellNumber.ToString(), xCenter + 10, yCenter - 5);
@@ -64,7 +65,7 @@ public class WarehouseTopology
             return; 
         }
                 
-        Topology[row, column] = new WarehouseNode(NodeType.EmptyCell, new(xCenter, yCenter));
+        _topology[row, column] = new WarehouseNode(NodeType.EmptyCell, new(xCenter, yCenter));
     }
     
     // Дистанция из/в шкаф будет задана слишком большой, чтобы путь в него был,
@@ -124,7 +125,6 @@ public class WarehouseTopology
     
     public static bool CellIsRack(int row, int column)
     {
-        //return column % 2 == 1 && row != 0 && row != 11 && row != 22;
         return ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 22;
     }
     
@@ -154,7 +154,7 @@ public class WarehouseTopology
         {
             for (int column = 0; column < Consts.ColumnsCount; column++)
             {
-                if (Topology[row, column].Type == NodeType.RackCell)
+                if (_topology[row, column].Type == NodeType.RackCell)
                 {
                     yield return row * Consts.ColumnsCount + column;
                 }
@@ -168,7 +168,7 @@ public class WarehouseTopology
         {
             for (int column = 0; column < Consts.ColumnsCount; column++)
             {
-                var node = Topology[row, column];
+                var node = _topology[row, column];
                 if (node.Type == NodeType.EmptyCell)
                 {
                     yield return new(row * Consts.ColumnsCount + column, node.Coordinates.CenterX, node.Coordinates.CenterY);

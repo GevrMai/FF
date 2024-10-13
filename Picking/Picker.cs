@@ -1,15 +1,17 @@
 using FF.TasksData;
+using FF.WarehouseData;
 
 namespace FF.Picking;
 
 public record Picker(int Id, int MaxWeight)
 {
     public int CurrentCellId;
-    public int? CurrentTaskCellId;
+    public int? CurrentDestinationCellId;
     public int CurrentLoadKg;
     public List<int>? PathToNextTask;
     public Queue<TaskNode>? TasksQueue;
     public (int X, int Y) Coordinates;
+    public DestinationType DestinationType;
 
     public int PassedCells = 0;
     
@@ -21,9 +23,14 @@ public record Picker(int Id, int MaxWeight)
         {
             return;
         }
-        if (PathToNextTask.Count == 2)    // последний элемент - id шкафа, путь завершен
+        if (PathToNextTask.Count == 2) // конечная точка достигнута
         {
-            CurrentTaskCellId = default;
+            if (DestinationType == DestinationType.DropPoint)
+            {
+                CurrentLoadKg = 0;
+            }
+            
+            CurrentDestinationCellId = default;
             PathToNextTask = default;
             return;
         }
