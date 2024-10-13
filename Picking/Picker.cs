@@ -1,3 +1,5 @@
+using FF.TasksData;
+
 namespace FF.Picking;
 
 public record Picker(int Id, int MaxWeight)
@@ -5,7 +7,8 @@ public record Picker(int Id, int MaxWeight)
     public int CurrentCellId;
     public int? CurrentTaskCellId;
     public int CurrentLoadKg;
-    public List<int>? Path;
+    public List<int>? PathToNextTask;
+    public Queue<TaskNode>? TasksQueue;
     public (int X, int Y) Coordinates;
 
     public int PassedCells = 0;
@@ -14,18 +17,18 @@ public record Picker(int Id, int MaxWeight)
 
     public void DoNextStep()
     {
-        if (Path is null)
+        if (PathToNextTask is null)
         {
             return;
         }
-        if (Path.Count == 2)    // последний элемент - id шкафа, путь завершен
+        if (PathToNextTask.Count == 2)    // последний элемент - id шкафа, путь завершен
         {
             CurrentTaskCellId = default;
-            Path = default;
+            PathToNextTask = default;
             return;
         }
         PassedCells++;
-        Path.RemoveAt(0);
-        CurrentCellId = Path.First();
+        PathToNextTask.RemoveAt(0);
+        CurrentCellId = PathToNextTask.First();
     }
 }

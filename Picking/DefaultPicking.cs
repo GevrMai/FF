@@ -40,6 +40,7 @@ public class DefaultPicking : IPicking
                     picker.CurrentTaskCellId = default;
                     picker.CurrentLoadKg = default;
                     picker.PassedCells = 0;
+                    picker.TasksQueue?.Clear();
                 }
                 break;
             }
@@ -55,9 +56,9 @@ public class DefaultPicking : IPicking
                         picker.CurrentTaskCellId = task.RackId;
                         picker.CurrentLoadKg += task.Weight;
 
-                        picker.Path = _pathFinder.FindShortestPath(picker);
+                        picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
                         Console.WriteLine($"picker at {picker.CurrentCellId}, task at {picker.CurrentTaskCellId!}");
-                        Console.WriteLine("path: " + string.Join(", ", picker.Path));
+                        Console.WriteLine("path: " + string.Join(", ", picker.PathToNextTask));
                     }
                 }
 

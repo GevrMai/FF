@@ -44,7 +44,7 @@ public class DrawingService
                 //нечетные столбцы с 0 - шкафы с товарами
                 // row 0, 11, 22 - проходы
                 // тут - отрисовка шкафов
-                if (column % 2 == 1 && row != 0 && row != 11 && row != 22)
+                if (WarehouseTopology.ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 22)
                 {
                     _graphics.DrawRectangle(_whitePen, currentXBorder, currentYBorder, widthPerColumn, heightPerRow);
                     _graphics.FillEllipse(_redBrush, currentXBorder + widthPerColumn/2, currentYBorder + heightPerRow/2, 10, 10);
@@ -92,14 +92,14 @@ public class DrawingService
             var location = CoordinatesHelper.GetCellCenterCoordinates(picker.CurrentCellId);
             var xCenter = location.X + 10;
             var yCenter = location.Y - 5;
-            DrawText($"{picker.Id}(>{picker.CurrentTaskCellId})", xCenter, yCenter);
+            DrawText($"{picker.Id} -> {picker.CurrentTaskCellId}", xCenter, yCenter);
         }
             
         BitmapChanged.Invoke(this, EventArgs.Empty);
         
         GC.Collect();
 
-        await Task.Delay(200);
+        await Task.Delay(100);
     }
 }
 

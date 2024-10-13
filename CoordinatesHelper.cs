@@ -14,4 +14,12 @@ public static class CoordinatesHelper
             (int)((column + 0.5) * cellWidth),
             (int)((row + 0.5) * cellHeight));
     }
+    
+    public static (int Row, int Column) GetCellRowAndColumn(int cellId)
+    {
+        var row = cellId / Consts.ColumnsCount;
+        var column = cellId % Consts.ColumnsCount;
+        
+        return new(row, column);
+    }
 }
