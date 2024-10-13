@@ -121,7 +121,7 @@
             WarehousePictureBox.Cursor = Cursors.No;
             WarehousePictureBox.Location = new Point(23, 119);
             WarehousePictureBox.Name = "WarehousePictureBox";
-            WarehousePictureBox.Size = new Size(2330, 1190);
+            WarehousePictureBox.Size = new Size(2495, 1250);
             WarehousePictureBox.TabIndex = 7;
             WarehousePictureBox.TabStop = false;
             // 

@@ -39,7 +39,7 @@ public class OptimizedPicking : IPicking
                 Console.WriteLine(_topology.Pickers.Sum(x => x.PassedCells));
                 foreach (var picker in _topology.Pickers)
                 {
-                    picker.CurrentTaskCellId = default;
+                    picker.CurrentDestinationCellId = default;
                     picker.CurrentLoadKg = default;
                     picker.PassedCells = 0;
                     picker.TasksQueue?.Clear();
@@ -50,7 +50,7 @@ public class OptimizedPicking : IPicking
             var allPickersAreFree = true;
             foreach (var picker in _topology.Pickers)
             {
-                if (picker.TasksQueue is not null && picker.TasksQueue.Any() || picker.CurrentTaskCellId is not null)
+                if (picker.TasksQueue is not null && picker.TasksQueue.Any() || picker.CurrentDestinationCellId is not null)
                 {
                     allPickersAreFree = false;
                     break;
@@ -68,11 +68,11 @@ public class OptimizedPicking : IPicking
             
             foreach (var picker in _topology.Pickers)
             {
-                if (picker.CurrentTaskCellId is null && picker.TasksQueue!.TryDequeue(out var task))
+                if (picker.CurrentDestinationCellId is null && picker.TasksQueue!.TryDequeue(out var task))
                 {
                     if (picker.CanCarry(task.Weight))
                     {
-                        picker.CurrentTaskCellId = task.RackId;
+                        picker.CurrentDestinationCellId = task.RackId;
                         picker.CurrentLoadKg += task.Weight;
 
                         picker.PathToNextTask = _pathFinder.FindShortestPath(picker);

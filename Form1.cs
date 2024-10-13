@@ -73,7 +73,7 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(30, 1, 1, 5_000, _ctsDefault);
+                _taskService.GenerateTasks(45, 1, 4, 5_000, _ctsDefault);
             });
             
             Task.Run(() =>

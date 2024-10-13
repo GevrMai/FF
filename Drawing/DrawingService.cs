@@ -9,6 +9,7 @@ public class DrawingService
     private readonly SolidBrush _redBrush;
     private readonly SolidBrush _greenBrush;
     private readonly SolidBrush _yellowBrush;
+    private readonly SolidBrush _whiteBrush;
     private readonly Font _font;
     public Bitmap Bitmap;
     private Graphics _graphics;
@@ -21,6 +22,7 @@ public class DrawingService
         _redBrush = new SolidBrush(Color.Red);
         _greenBrush = new SolidBrush(Color.Green);
         _yellowBrush = new SolidBrush(Color.Yellow);
+        _whiteBrush = new SolidBrush(Color.White);
         _font = new Font("Century Gothic", 14.25F, FontStyle.Bold);
         
         Bitmap = new Bitmap(Consts.PictureBoxWidth, Consts.PictureBoxHeight);
@@ -48,6 +50,13 @@ public class DrawingService
                 {
                     _graphics.DrawRectangle(_whitePen, currentXBorder, currentYBorder, widthPerColumn, heightPerRow);
                     _graphics.FillEllipse(_redBrush, currentXBorder + widthPerColumn/2, currentYBorder + heightPerRow/2, 10, 10);
+                    continue;
+                }
+
+                if (WarehouseTopology.DropPointsCoordinates.Contains((row, column)))
+                {
+                    // точка сброса, можно пройти сквозь
+                    _graphics.FillEllipse(_whiteBrush, currentXBorder + widthPerColumn/2, currentYBorder + heightPerRow/2, 10, 10);
                     continue;
                 }
                 
@@ -92,7 +101,7 @@ public class DrawingService
             var location = CoordinatesHelper.GetCellCenterCoordinates(picker.CurrentCellId);
             var xCenter = location.X + 10;
             var yCenter = location.Y - 5;
-            DrawText($"{picker.Id} -> {picker.CurrentTaskCellId}", xCenter, yCenter);
+            DrawText($"{picker.Id} -> {picker.CurrentDestinationCellId}", xCenter, yCenter);
         }
             
         BitmapChanged.Invoke(this, EventArgs.Empty);

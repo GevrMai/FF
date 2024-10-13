@@ -37,7 +37,7 @@ public class DefaultPicking : IPicking
                 Console.WriteLine(_topology.Pickers.Sum(x => x.PassedCells));
                 foreach (var picker in _topology.Pickers)
                 {
-                    picker.CurrentTaskCellId = default;
+                    picker.CurrentDestinationCellId = default;
                     picker.CurrentLoadKg = default;
                     picker.PassedCells = 0;
                     picker.TasksQueue?.Clear();
@@ -47,26 +47,61 @@ public class DefaultPicking : IPicking
 
             foreach (var picker in _topology.Pickers)
             {
-                if (picker.CurrentTaskCellId is null)
+                if (picker.CurrentDestinationCellId is null)
                 {
                     _taskService.TasksQueue.TryDequeue(out TaskNode task);
 
                     if (task is not null && picker.CanCarry(task.Weight))
                     {
-                        picker.CurrentTaskCellId = task.RackId;
+                        picker.CurrentDestinationCellId = task.RackId;
                         picker.CurrentLoadKg += task.Weight;
-
                         picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
-                        Console.WriteLine($"picker at {picker.CurrentCellId}, task at {picker.CurrentTaskCellId!}");
-                        Console.WriteLine("path: " + string.Join(", ", picker.PathToNextTask));
+                        picker.DestinationType = DestinationType.RackCell;
+                        
+                        Console.WriteLine($"PICKER > {picker.CurrentCellId}, TASK > {picker.CurrentDestinationCellId}");
+                        Console.WriteLine("PATH: " + string.Join(", ", picker.PathToNextTask));
+                    }
+                    else if (task is not null && !picker.CanCarry(task.Weight)) // превышена нагрузка - надо идти на точку сброса
+                    {
+                        _taskService.TasksQueue.Enqueue(task);  // обратно в очередь
+                        Console.WriteLine($"task with load {task.Weight} and id {task.RackId} is returned in queue");
+                        
+                        var firstDropPointId = CoordinatesHelper.GetCellId(WarehouseTopology.DropPointsCoordinates.First().row,
+                                                                WarehouseTopology.DropPointsCoordinates.First().column);
+                        var secondDropPointId = CoordinatesHelper.GetCellId(WarehouseTopology.DropPointsCoordinates.Last().row,
+                                                                WarehouseTopology.DropPointsCoordinates.First().column);
+
+                        var pathToFirstDropPoint = _pathFinder.FindShortestPath(picker.CurrentCellId, firstDropPointId);
+                        
+                        var pathToSecondDropPoint = _pathFinder.FindShortestPath(picker.CurrentCellId, secondDropPointId);
+
+                        ChooseDropPoint(pathToFirstDropPoint, pathToSecondDropPoint, picker, firstDropPointId, secondDropPointId);
+                        picker.DestinationType = DestinationType.DropPoint;
+                        
+                        Console.WriteLine($"PICKER > {picker.CurrentCellId}, DROP POINT > {picker.CurrentDestinationCellId}");
+                        Console.WriteLine("PATH: " + string.Join(", ", picker.PathToNextTask));
                     }
                 }
 
                 picker.DoNextStep();
-                //Console.WriteLine($"picker {picker.Id} at pos {picker.CurrentCellId}");
             }
 
             await _drawingService.DrawNextStep(_topology.Pickers);
+        }
+    }
+
+    private static void ChooseDropPoint(List<int> pathToFirstDropPoint, List<int> pathToSecondDropPoint, Picker picker,
+        int firstDropPointId, int secondDropPointId)
+    {
+        if (pathToFirstDropPoint.Count < pathToSecondDropPoint.Count)
+        {
+            picker.CurrentDestinationCellId = firstDropPointId;
+            picker.PathToNextTask = pathToFirstDropPoint;
+        }
+        else
+        {
+            picker.CurrentDestinationCellId = secondDropPointId;
+            picker.PathToNextTask = pathToSecondDropPoint;
         }
     }
 }

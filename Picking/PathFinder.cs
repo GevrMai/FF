@@ -25,7 +25,7 @@ public class PathFinder
         {
             var currentCellId = queue.Dequeue();
 
-            if (currentCellId == picker.CurrentTaskCellId)
+            if (currentCellId == picker.CurrentDestinationCellId)
                 break;
 
             visited[currentCellId] = true;
@@ -46,7 +46,7 @@ public class PathFinder
             }
         }
 
-        return ReconstructPath(previous, picker.CurrentTaskCellId);
+        return ReconstructPath(previous, picker.CurrentDestinationCellId);
     }
     
     public List<int> FindShortestPath(int from, int to)
