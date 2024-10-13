@@ -13,6 +13,8 @@ public class WarehouseTopology
 
     public readonly WarehouseNode[,] Topology;
     public readonly int[,] DistancesMatrix;
+
+    public static HashSet<int> ColumnsWithRacks = new() { 1, 2, 4, 5, 7, 8 };
     
     public WarehouseTopology(DrawingService drawingService)
     {
@@ -27,7 +29,7 @@ public class WarehouseTopology
 
         Task.WaitAll(setUpTopologyTask, setUpDistancesMatrixTask);
         
-        WithPickersCount(3);
+        WithPickersCount(5);
     }
 
     private Task SetUpTopology()
@@ -75,11 +77,15 @@ public class WarehouseTopology
             {
                 if (column != Consts.ColumnsCount - 1)  // можем вправо
                 {
-                    if (!CellIsRack(row, column) && !CellIsRack(row, column + 1))   // свободная в свободную
+                    if (CellIsRack(row, column) && CellIsRack(row, column + 1)) // из шкафа в шкаф
+                    {
+                        DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column + 1] = 50_000;
+                    }
+                    else if(!CellIsRack(row, column) && !CellIsRack(row, column + 1))   // свободная в свободную
                     {
                         DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column + 1] = 1;
                     }
-                    else if (CellIsRack(row, column) || CellIsRack(row, column +1)) // из шкафа, в шкаф
+                    else    // из свободной в шкаф или наоборот
                     {
                         DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column + 1] = 10_000;
                     }
@@ -87,11 +93,15 @@ public class WarehouseTopology
                 
                 if (column != 0)  // можем влево
                 {
-                    if (!CellIsRack(row, column) && !CellIsRack(row, column - 1))   // свободная в свободную
+                    if (CellIsRack(row, column) && CellIsRack(row, column - 1)) // из шкафа в шкаф
+                    {
+                        DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column - 1] = 50_000;
+                    }
+                    else if(!CellIsRack(row, column) && !CellIsRack(row, column - 1))   // свободная в свободную
                     {
                         DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column - 1] = 1;
                     }
-                    else if (CellIsRack(row, column) || CellIsRack(row, column - 1)) // из шкафа, в шкаф
+                    else    // из свободной в шкаф или наоборот
                     {
                         DistancesMatrix[row * Consts.ColumnsCount + column, row * Consts.ColumnsCount + column - 1] = 10_000;
                     }
@@ -114,7 +124,8 @@ public class WarehouseTopology
     
     public static bool CellIsRack(int row, int column)
     {
-        return column % 2 == 1 && row != 0 && row != 11 && row != 22;
+        //return column % 2 == 1 && row != 0 && row != 11 && row != 22;
+        return ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 22;
     }
     
     private void WithPickersCount(int count)

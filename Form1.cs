@@ -14,7 +14,7 @@ namespace FF
         private readonly OptimizedPicking _optimizedPicking;
 
         private CancellationTokenSource _ctsDefault;
-        private CancellationTokenSource _ctsOpt;
+        private CancellationTokenSource _ctsOptimized;
         public Form1(
             TaskService taskService,
             WarehouseTopology topology,
@@ -34,7 +34,7 @@ namespace FF
             WarehousePictureBox.Image = _drawingService.DrawWarehouse();
 
             _ctsDefault = new();
-            _ctsOpt = new();
+            _ctsOptimized = new();
             
             _drawingService.BitmapChanged += DrawingService_BitmapChanged;
             
@@ -48,15 +48,17 @@ namespace FF
             DefaultButton.Enabled = true;
             await _ctsDefault.CancelAsync();
             _ctsDefault = new CancellationTokenSource();
+
+            await Task.Delay(1500);
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(5, 1, 1, 5_000, _ctsDefault);
+                _taskService.GenerateTasks(30, 1, 1, 15_000, _ctsDefault);
             });
             
             Task.Run(() =>
             {
-                _optimizedPicking.StartProcess(_ctsDefault);
+                _optimizedPicking.StartProcess(_ctsOptimized);
             });
         }
 
@@ -64,13 +66,14 @@ namespace FF
         {
             DefaultButton.Enabled = false;
             OptimizedButton.Enabled = true;
-            await _ctsOpt.CancelAsync();
-            _ctsOpt = new CancellationTokenSource();
+            await _ctsOptimized.CancelAsync();
+            _ctsOptimized = new CancellationTokenSource();
             
+            await Task.Delay(1500);
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(8, 1, 1, 5_000, _ctsDefault);
+                _taskService.GenerateTasks(30, 1, 1, 5_000, _ctsDefault);
             });
             
             Task.Run(() =>
@@ -99,7 +102,6 @@ namespace FF
         
         private void DrawingService_BitmapChanged(object sender, EventArgs e)
         {
-            // Установите Bitmap для PictureBox
             WarehousePictureBox.Image = _drawingService.Bitmap;
         }
     }
