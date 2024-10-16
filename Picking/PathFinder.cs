@@ -86,6 +86,21 @@ public class PathFinder
 
         return ReconstructPath(previous, to);
     }
+    
+    public void ChooseDropPoint(List<int> pathToFirstDropPoint, List<int> pathToSecondDropPoint, Picker picker,
+        int firstDropPointId, int secondDropPointId)
+    {
+        if (pathToFirstDropPoint.Count < pathToSecondDropPoint.Count)
+        {
+            picker.CurrentDestinationCellId = firstDropPointId;
+            picker.PathToNextTask = pathToFirstDropPoint;
+        }
+        else
+        {
+            picker.CurrentDestinationCellId = secondDropPointId;
+            picker.PathToNextTask = pathToSecondDropPoint;
+        }
+    }
 
     private List<int> ReconstructPath(int?[] previous, int? targetCellId)
     {

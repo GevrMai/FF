@@ -108,7 +108,7 @@ public class DrawingService
         
         GC.Collect();
 
-        await Task.Delay(100);
+        await Task.Delay(620);
     }
 }
 

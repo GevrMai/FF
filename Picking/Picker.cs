@@ -14,6 +14,7 @@ public record Picker(int Id, int MaxWeight)
     public DestinationType DestinationType;
 
     public int PassedCells = 0;
+    public int TasksDone = 0;
     
     public bool CanCarry(int weightToCarry) => MaxWeight >= CurrentLoadKg + weightToCarry;
 
@@ -29,7 +30,10 @@ public record Picker(int Id, int MaxWeight)
             {
                 CurrentLoadKg = 0;
             }
-            
+            else//TODO выпилить
+            {
+                TasksDone++;
+            }
             CurrentDestinationCellId = default;
             PathToNextTask = default;
             return;
