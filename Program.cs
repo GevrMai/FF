@@ -1,9 +1,12 @@
+using System.Text;
 using FF.Drawing;
 using FF.Picking;
 using FF.TasksData;
 using FF.WarehouseData;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Serilog.Formatting.Json;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace FF
 {
@@ -31,6 +34,12 @@ namespace FF
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .WriteTo.Console()
+                .WriteTo.File(
+                    path: "logs.txt",
+                    formatter: new JsonFormatter(),
+                    retainedFileCountLimit: 100,
+                    rollingInterval: RollingInterval.Minute,
+                    encoding: Encoding.UTF8)
                 .CreateLogger();
             
             services
