@@ -139,7 +139,7 @@ public class WarehouseTopology
             var cell = emptyCellsIds[_rnd.Next(0, emptyCellsIds.Count)];
             Pickers.Add(new(
                 Id: i,
-                MaxWeight: Consts.MaxWeight)
+                MaxWeight: Consts.PickerMaxCarryWeight)
                 {
                     CurrentCellId = cell.cellId,
                     Coordinates = new(cell.xCenter, cell.yCenter)

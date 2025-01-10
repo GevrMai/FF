@@ -17,9 +17,9 @@ public class TaskService
 
     public readonly ConcurrentQueue<TaskNode> TasksQueue = new ();
     
-    public async Task GenerateTasks(int tasksCountPerBatch, int numberOfTimes, int maxWeightKg, int delayMs, CancellationTokenSource cts)
+    public async Task GenerateTasks(int tasksCountPerBatch, int numberOfTimes, int maxWeightKg, int delaySeconds, CancellationTokenSource cts)
     {
-        if (tasksCountPerBatch <= 0 || maxWeightKg <= 0 || delayMs < 0)
+        if (tasksCountPerBatch <= 0 || maxWeightKg <= 0 || delaySeconds < 0)
         {
             throw new ArgumentException("Invalid arguments. TasksCountPerBatch cannot be less or equal to 0. MaxWeight cannot be less or equal to 0. Delay cannot be less than 0.");
         }
@@ -39,7 +39,7 @@ public class TaskService
                 TasksQueue.Enqueue( new(rackCells[rnd.Next(0, rackCells.Count)], rnd.Next(1, maxWeightKg) ));
             }
             
-            await Task.Delay(delayMs);
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
         }
     }
 }

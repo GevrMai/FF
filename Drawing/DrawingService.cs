@@ -108,11 +108,10 @@ public class DrawingService
         
         GC.Collect();
 
-        await Task.Delay(620);
+        await Task.Delay(Consts.DrawingImageDelayMs);
     }
 }
 
 //TODO заюзать CoordinatesHelper где надо
 //TODO id rack проставлять в DrawWarehouse
-//TODO пофиксить баг с проходом сквозь ячейки
 //TODO порефачить

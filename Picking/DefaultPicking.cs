@@ -1,6 +1,7 @@
 using FF.Drawing;
 using FF.TasksData;
 using FF.WarehouseData;
+using Serilog;
 
 namespace FF.Picking;
 
@@ -34,7 +35,9 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
         {
             if (cts.IsCancellationRequested)
             {
-                Console.WriteLine(_topology.Pickers.Sum(x => x.PassedCells));
+                Log.Information("Stopping [DEFAULT]... Pickers` passed cells total: {PassedCells}",
+                    _topology.Pickers.Sum(x => x.PassedCells));
+                
                 foreach (var picker in _topology.Pickers)
                 {
                     picker.CurrentDestinationCellId = default;
@@ -58,8 +61,8 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                         picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
                         picker.DestinationType = DestinationType.RackCell;
                         
-                        Console.WriteLine($"PICKER > {picker.CurrentCellId}, TASK > {picker.CurrentDestinationCellId}");
-                        Console.WriteLine("PATH: " + string.Join(", ", picker.PathToNextTask));
+                        Log.Information("PICKER - {PickerCellId} | TASK - {TaskCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
+                        Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
                     }
                     else if (task is not null && !picker.CanCarry(task.Weight)
                              || task is null && picker.CurrentLoadKg != default) // превышена нагрузка - надо идти на точку сброса или свободен и загружен
@@ -67,7 +70,7 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                         if (task is not null)
                         {
                             _taskService.TasksQueue.Enqueue(task);  // обратно в очередь
-                            Console.WriteLine($"task with load {task.Weight} and id {task.RackId} is returned in queue");
+                            Log.Information("task with load {Weight} and id {TaskCellId} is returned in queue", task.Weight, task.RackId);
                         }
                         
                         var firstDropPointId = CoordinatesHelper.GetCellId(WarehouseTopology.DropPointsCoordinates.First().row,
@@ -82,8 +85,8 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                         _pathFinder.ChooseDropPoint(pathToFirstDropPoint, pathToSecondDropPoint, picker, firstDropPointId, secondDropPointId);
                         picker.DestinationType = DestinationType.DropPoint;
                         
-                        Console.WriteLine($"PICKER > {picker.CurrentCellId}, DROP POINT > {picker.CurrentDestinationCellId}");
-                        Console.WriteLine("PATH: " + string.Join(", ", picker.PathToNextTask));
+                        Log.Information("PICKER - {PickerCellId}, DROP POINT - {DropPointCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
+                        Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
                     }
                 }
 

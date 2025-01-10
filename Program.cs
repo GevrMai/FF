@@ -3,6 +3,7 @@ using FF.Picking;
 using FF.TasksData;
 using FF.WarehouseData;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace FF
 {
@@ -27,13 +28,19 @@ namespace FF
         
         private static void ConfigureServices(ServiceCollection services)
         {
-            services.AddScoped<Form1>();
-            services.AddSingleton<TaskService>();
-            services.AddSingleton<WarehouseTopology>();
-            services.AddSingleton<DrawingService>();
-            services.AddSingleton<DefaultPicking>();
-            services.AddSingleton<OptimizedPicking>();
-            services.AddSingleton<PathFinder>();
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .WriteTo.Console()
+                .CreateLogger();
+            
+            services
+                .AddScoped<Form1>()
+                .AddSingleton<TaskService>()
+                .AddSingleton<WarehouseTopology>()
+                .AddSingleton<DrawingService>()
+                .AddSingleton<DefaultPicking>()
+                .AddSingleton<OptimizedPicking>()
+                .AddSingleton<PathFinder>();
         }
     }
 }

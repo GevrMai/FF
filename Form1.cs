@@ -53,7 +53,12 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(45, 3, 6, 20_000, _ctsDefault);
+                _taskService.GenerateTasks(
+                    Consts.TasksCountPerBatch,
+                    Consts.NumberOfBatches,
+                    Consts.MaxWeightOfTaskKg,
+                    Consts.DelayBetweenBatchesSeconds,
+                    _ctsDefault);
             });
             
             Task.Run(() =>
@@ -73,7 +78,12 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(45, 3, 6, 20_000, _ctsDefault);
+                _taskService.GenerateTasks(
+                    Consts.TasksCountPerBatch,
+                    Consts.NumberOfBatches,
+                    Consts.MaxWeightOfTaskKg,
+                    Consts.DelayBetweenBatchesSeconds,
+                    _ctsOptimized);
             });
             
             Task.Run(() =>
