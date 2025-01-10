@@ -19,7 +19,7 @@ namespace FF
             var services = new ServiceCollection();  
             ConfigureServices(services); 
             
-            using ServiceProvider serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
             Application.Run(
                 serviceProvider.GetRequiredService<Form1>()
                 );  

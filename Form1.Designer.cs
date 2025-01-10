@@ -34,8 +34,12 @@
             PickingTypeLabel = new Label();
             DelayTextBox = new TextBox();
             StatusLabel = new Label();
-            WarehousePictureBox = new PictureBox();
-            ((System.ComponentModel.ISupportInitialize)WarehousePictureBox).BeginInit();
+            WarehouseFloor1PictureBox = new PictureBox();
+            WarehouseFloor2PictureBox = new PictureBox();
+            Floor1Label = new Label();
+            Floor2Label = new Label();
+            ((System.ComponentModel.ISupportInitialize)WarehouseFloor1PictureBox).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)WarehouseFloor2PictureBox).BeginInit();
             SuspendLayout();
             // 
             // OptimizedButton
@@ -115,15 +119,43 @@
             StatusLabel.TabIndex = 6;
             StatusLabel.Text = "Wait...";
             // 
-            // WarehousePictureBox
+            // WarehouseFloor1PictureBox
             // 
-            WarehousePictureBox.BackColor = Color.Navy;
-            WarehousePictureBox.Cursor = Cursors.No;
-            WarehousePictureBox.Location = new Point(23, 119);
-            WarehousePictureBox.Name = "WarehousePictureBox";
-            WarehousePictureBox.Size = new Size(2495, 1250);
-            WarehousePictureBox.TabIndex = 7;
-            WarehousePictureBox.TabStop = false;
+            WarehouseFloor1PictureBox.BackColor = Color.Navy;
+            WarehouseFloor1PictureBox.Cursor = Cursors.No;
+            WarehouseFloor1PictureBox.Location = new Point(21, 150);
+            WarehouseFloor1PictureBox.Name = "WarehouseFloor1PictureBox";
+            WarehouseFloor1PictureBox.Size = new Size(1240, 1220);
+            WarehouseFloor1PictureBox.TabIndex = 7;
+            WarehouseFloor1PictureBox.TabStop = false;
+            // 
+            // WarehouseFloor2PictureBox
+            // 
+            WarehouseFloor2PictureBox.BackColor = Color.Navy;
+            WarehouseFloor2PictureBox.Cursor = Cursors.No;
+            WarehouseFloor2PictureBox.Location = new Point(1288, 150);
+            WarehouseFloor2PictureBox.Name = "WarehouseFloor2PictureBox";
+            WarehouseFloor2PictureBox.Size = new Size(1240, 1220);
+            WarehouseFloor2PictureBox.TabIndex = 8;
+            WarehouseFloor2PictureBox.TabStop = false;
+            // 
+            // Floor1Label
+            // 
+            Floor1Label.AutoSize = true;
+            Floor1Label.Location = new Point(21, 124);
+            Floor1Label.Name = "Floor1Label";
+            Floor1Label.Size = new Size(76, 23);
+            Floor1Label.TabIndex = 9;
+            Floor1Label.Text = "1 этаж";
+            // 
+            // Floor2Label
+            // 
+            Floor2Label.AutoSize = true;
+            Floor2Label.Location = new Point(1288, 124);
+            Floor2Label.Name = "Floor2Label";
+            Floor2Label.Size = new Size(76, 23);
+            Floor2Label.TabIndex = 10;
+            Floor2Label.Text = "2 этаж";
             // 
             // Form1
             // 
@@ -131,7 +163,10 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.MidnightBlue;
             ClientSize = new Size(2544, 1401);
-            Controls.Add(WarehousePictureBox);
+            Controls.Add(Floor2Label);
+            Controls.Add(Floor1Label);
+            Controls.Add(WarehouseFloor2PictureBox);
+            Controls.Add(WarehouseFloor1PictureBox);
             Controls.Add(StatusLabel);
             Controls.Add(DelayTextBox);
             Controls.Add(PickingTypeLabel);
@@ -145,7 +180,8 @@
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Fulfillment simulator";
-            ((System.ComponentModel.ISupportInitialize)WarehousePictureBox).EndInit();
+            ((System.ComponentModel.ISupportInitialize)WarehouseFloor1PictureBox).EndInit();
+            ((System.ComponentModel.ISupportInitialize)WarehouseFloor2PictureBox).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -158,6 +194,9 @@
         private Label PickingTypeLabel;
         private TextBox DelayTextBox;
         private Label StatusLabel;
-        private PictureBox WarehousePictureBox;
+        private PictureBox WarehouseFloor1PictureBox;
+        private PictureBox WarehouseFloor2PictureBox;
+        private Label Floor1Label;
+        private Label Floor2Label;
     }
 }

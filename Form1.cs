@@ -31,7 +31,7 @@ namespace FF
             
             InitializeComponent();
             
-            WarehousePictureBox.Image = _drawingService.DrawWarehouse();
+            WarehouseFloor1PictureBox.Image = _drawingService.DrawWarehouse();
 
             _ctsDefault = new();
             _ctsOptimized = new();
@@ -53,7 +53,7 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(45, 3, 6, 20_000, _ctsDefault);
+                _taskService.GenerateTasks(35, 3, 6, 20_000, _ctsDefault);
             });
             
             Task.Run(() =>
@@ -73,7 +73,7 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(45, 3, 6, 20_000, _ctsDefault);
+                _taskService.GenerateTasks(35, 3, 6, 20_000, _ctsDefault);
             });
             
             Task.Run(() =>
@@ -102,7 +102,7 @@ namespace FF
         
         private void DrawingService_BitmapChanged(object sender, EventArgs e)
         {
-            WarehousePictureBox.Image = _drawingService.Bitmap;
+            WarehouseFloor1PictureBox.Image = _drawingService.Bitmap;
         }
     }
 }

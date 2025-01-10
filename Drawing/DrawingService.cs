@@ -6,6 +6,7 @@ namespace FF.Drawing;
 public class DrawingService
 {
     private readonly Pen _whitePen;
+    private readonly Pen _brownPen;
     private readonly SolidBrush _redBrush;
     private readonly SolidBrush _greenBrush;
     private readonly SolidBrush _yellowBrush;
@@ -18,7 +19,8 @@ public class DrawingService
     
     public DrawingService()
     {
-        _whitePen = new Pen(Color.FromKnownColor(KnownColor.White), 2);
+        _whitePen = new Pen(Color.White, 2);
+        _brownPen = new Pen(Color.Brown, 2);
         _redBrush = new SolidBrush(Color.Red);
         _greenBrush = new SolidBrush(Color.Green);
         _yellowBrush = new SolidBrush(Color.Yellow);
@@ -44,9 +46,9 @@ public class DrawingService
                 var currentXBorder = column * widthPerColumn;
 
                 //нечетные столбцы с 0 - шкафы с товарами
-                // row 0, 11, 22 - проходы
+                // row 0, 11, 12, 13, 24 - проходы
                 // тут - отрисовка шкафов
-                if (WarehouseTopology.ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 22)
+                if (WarehouseTopology.ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 12 && row != 13 && row != 24)
                 {
                     _graphics.DrawRectangle(_whitePen, currentXBorder, currentYBorder, widthPerColumn, heightPerRow);
                     _graphics.FillEllipse(_redBrush, currentXBorder + widthPerColumn/2, currentYBorder + heightPerRow/2, 10, 10);
@@ -60,6 +62,24 @@ public class DrawingService
                     continue;
                 }
                 
+                if (WarehouseTopology.LiftCoordinates.Contains((row, column)))
+                {
+                    // лифт, доступны слева и справа
+                    _graphics.DrawRectangle(_brownPen, currentXBorder, currentYBorder, widthPerColumn, heightPerRow);
+
+                    switch (column)
+                    {
+                        case 4:
+                            DrawText("<--- access", currentXBorder + 7, currentYBorder + 13, FontSize.Small);
+                            break;
+                        case 5:
+                            DrawText("access --->", currentXBorder + 15, currentYBorder + 13, FontSize.Small);
+                            break;
+                    }
+                    
+                    continue;
+                }
+                
                 _graphics.FillEllipse(_greenBrush, currentXBorder + widthPerColumn/2, currentYBorder + heightPerRow/2, 10, 10);     // проход свободен
             }
         }
@@ -67,9 +87,9 @@ public class DrawingService
         return Bitmap;
     }
 
-    public void DrawText(string text, int x, int y)
+    public void DrawText(string text, int x, int y, FontSize size = FontSize.Medium)
     {
-        _graphics.DrawString(text, _font, _yellowBrush, x, y);
+        _graphics.DrawString(text, GetFont(size), _yellowBrush, x, y);
     }
 
     public async Task DrawNextStep(List<Picker> pickers)
@@ -108,7 +128,25 @@ public class DrawingService
         
         GC.Collect();
 
-        await Task.Delay(620);
+        await Task.Delay(450);
+    }
+
+    public enum FontSize
+    {
+        Small,
+        Medium,
+        Big
+    }
+
+    private Font GetFont(FontSize size)
+    {
+        return size switch
+        {
+            FontSize.Small => new Font("Century Gothic", 10.25F, FontStyle.Bold),
+            FontSize.Medium => new Font("Century Gothic", 14.25F, FontStyle.Bold),
+            FontSize.Big => new Font("Century Gothic", 18.25F, FontStyle.Bold),
+            _ => throw new ArgumentOutOfRangeException("Unimplemented enum value")
+        };
     }
 }
 
