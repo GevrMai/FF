@@ -188,7 +188,7 @@ public class OptimizedPicking : IPicking
         });
         sw.Stop();
         Log.Information($"Elapsed seconds for distance matrix calc {sw.Elapsed.TotalSeconds} | TasksCount {pointsForGeneration.Count}");
-        Metrics.IncMakingDistanceMatrixForOptimizedPickingSecondsElapsedCounter((int)sw.Elapsed.TotalSeconds);
+        Metrics.IncMakingDistanceMatrixForOptimizedPickingSecondsElapsedHistogram(sw.Elapsed.TotalSeconds);
                 
         var pickerStartPoints = Enumerable.Range(0, _topology.Pickers.Count).ToArray();
         var pickerEndPoints = new int[_topology.Pickers.Count].Select(x => pointsForGeneration.Count - 1).ToArray();

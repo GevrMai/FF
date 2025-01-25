@@ -1,5 +1,6 @@
 using System.Diagnostics.Metrics;
 using FF.WarehouseData;
+using OpenTelemetry.Metrics;
 
 namespace FF.Picking;
 
@@ -23,8 +24,8 @@ static class Metrics
         name: "DropPointVisitsCounter",
         unit: "Quantity",
         description: "Походов на точку сброса");
-    private static readonly Histogram<int> MakingDistanceMatrixForOptimizedPickingSecondsElapsedCounter = PickingMetrics.CreateHistogram<int>(
-        name: "MakingDistanceMatrixForOptimizedPickingSecondsElapsedCounter",
+    private static readonly Histogram<double> MakingDistanceMatrixForOptimizedPickingSecondsElapsedHistogram = PickingMetrics.CreateHistogram<double>(
+        name: "MakingDistanceMatrixForOptimizedPickingSecondsElapsedHistogram",
         unit: "Seconds",
         description: "Секунд потрачено на построение матрицы расстояний");
     
@@ -44,8 +45,8 @@ static class Metrics
     {
         DropPointVisitsCounter.Add(1, new KeyValuePair<string, object?>("PickingType", pickingType));
     }
-    public static void IncMakingDistanceMatrixForOptimizedPickingSecondsElapsedCounter(int seconds)
+    public static void IncMakingDistanceMatrixForOptimizedPickingSecondsElapsedHistogram(double seconds)
     {
-        MakingDistanceMatrixForOptimizedPickingSecondsElapsedCounter.Record(seconds);
+        MakingDistanceMatrixForOptimizedPickingSecondsElapsedHistogram.Record(seconds);
     }
 }

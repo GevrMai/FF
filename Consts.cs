@@ -15,11 +15,11 @@ public static class Consts
 
     public const int DrawingImageDelayMs = 320;
     
-    public const int TasksCountPerBatch = 150;
+    public const int TasksCountPerBatch = 90;
     public const int NumberOfBatches = 20;
     public const int MaxWeightOfTaskKg = 4;
-    public const int DelayBetweenBatchesSeconds = 30;
+    public const int DelayBetweenBatchesSeconds = 20;
 
     [Range(0, 100)]
-    public const int PercentOfMaxCarriedWeight = 0;
+    public const int PercentOfMaxCarriedWeight = 15;
 }
