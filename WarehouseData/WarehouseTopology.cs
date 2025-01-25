@@ -16,6 +16,8 @@ public class WarehouseTopology
 
     public static readonly HashSet<int> ColumnsWithRacks = [1, 2, 4, 5, 7, 8];
     public static readonly List<(int row, int column)> DropPointsCoordinates = new() { (0, 0), (Consts.RowsCount - 1, Consts.ColumnsCount - 1) };
+
+    public static PickingType CurrentPickingType = PickingType.None;
     
     public WarehouseTopology(DrawingService drawingService)
     {
@@ -30,7 +32,7 @@ public class WarehouseTopology
 
         Task.WaitAll(setUpTopologyTask, setUpDistancesMatrixTask);
         
-        WithPickersCount(4);
+        WithPickersCount(Consts.PickersCount);
     }
 
     private Task SetUpTopology()

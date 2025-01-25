@@ -26,6 +26,7 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
 
     public async Task StartProcess(CancellationTokenSource cts)
     {
+        WarehouseTopology.CurrentPickingType = PickingType.Default;
         if (!_topology.Pickers.Any())
         {
             throw new ArgumentException("There are no pickers");
@@ -35,6 +36,7 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
         {
             if (cts.IsCancellationRequested)
             {
+                WarehouseTopology.CurrentPickingType = PickingType.None;
                 Log.Information("Stopping [DEFAULT]... Pickers` passed cells total: {PassedCells}",
                     _topology.Pickers.Sum(x => x.PassedCells));
                 
@@ -60,6 +62,8 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                         picker.CurrentLoadKg += task.Weight;
                         picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
                         picker.DestinationType = DestinationType.RackCell;
+                        
+                        Metrics.IncStartedTasksCounter(PickingType.Default);
                         
                         Log.Information("PICKER - {PickerCellId} | TASK - {TaskCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
                         Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
@@ -87,9 +91,11 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                         
                         Log.Information("PICKER - {PickerCellId}, DROP POINT - {DropPointCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
                         Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
+                        
+                        Metrics.IncDropPointVisitsCounter(WarehouseTopology.CurrentPickingType);
                     }
                 }
-
+                
                 picker.DoNextStep();
             }
 

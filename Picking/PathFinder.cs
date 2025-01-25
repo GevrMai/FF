@@ -94,12 +94,11 @@ public class PathFinder
         {
             picker.CurrentDestinationCellId = firstDropPointId;
             picker.PathToNextTask = pathToFirstDropPoint;
+            return;
         }
-        else
-        {
-            picker.CurrentDestinationCellId = secondDropPointId;
-            picker.PathToNextTask = pathToSecondDropPoint;
-        }
+        
+        picker.CurrentDestinationCellId = secondDropPointId;
+        picker.PathToNextTask = pathToSecondDropPoint;
     }
 
     private List<int> ReconstructPath(int?[] previous, int? targetCellId)

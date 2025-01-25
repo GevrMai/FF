@@ -1,19 +1,25 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace FF;
 
 public static class Consts
 {
-    public static int PictureBoxWidth = 2495;
-    public static int PictureBoxHeight = 1250;
+    public const int PictureBoxWidth = 2495;
+    public const int PictureBoxHeight = 1250;
     
-    public static int RowsCount = 23;
-    public static int ColumnsCount = 10;
+    public const int RowsCount = 23;
+    public const int ColumnsCount = 10;
 
-    public static int PickerMaxCarryWeight = 20;
+    public const int PickersCount = 4;
+    public const int PickerMaxCarryWeight = 30;
 
-    public static int DrawingImageDelayMs = 150;
+    public const int DrawingImageDelayMs = 320;
     
-    public static int TasksCountPerBatch = 20;
-    public static int NumberOfBatches = 4;
-    public static int MaxWeightOfTaskKg = 15;
-    public static int DelayBetweenBatchesSeconds = 10;
+    public const int TasksCountPerBatch = 150;
+    public const int NumberOfBatches = 20;
+    public const int MaxWeightOfTaskKg = 4;
+    public const int DelayBetweenBatchesSeconds = 30;
+
+    [Range(0, 100)]
+    public const int PercentOfMaxCarriedWeight = 0;
 }

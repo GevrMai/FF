@@ -2,6 +2,8 @@ using FF.Drawing;
 using FF.Picking;
 using FF.TasksData;
 using FF.WarehouseData;
+using Microsoft.VisualBasic.Logging;
+using Log = Serilog.Log;
 
 namespace FF
 {
@@ -60,7 +62,7 @@ namespace FF
                     Consts.DelayBetweenBatchesSeconds,
                     _ctsDefault);
             });
-            
+
             Task.Run(() =>
             {
                 _optimizedPicking.StartProcess(_ctsOptimized);

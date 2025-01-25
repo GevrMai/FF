@@ -4,6 +4,8 @@ using FF.Picking;
 using FF.TasksData;
 using FF.WarehouseData;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using Serilog;
 using Serilog.Formatting.Json;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -18,6 +20,12 @@ namespace FF
         [STAThread]
         static void Main()
         {
+            // Метрики с использованием Прометеус
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter("Picking")
+                .AddPrometheusHttpListener(options => options.UriPrefixes = new [] { "http://localhost:9184/" })
+                .Build();
+            
             ApplicationConfiguration.Initialize();
             
             var services = new ServiceCollection();  
@@ -37,11 +45,11 @@ namespace FF
                 .WriteTo.File(
                     path: "logs.txt",
                     formatter: new JsonFormatter(),
-                    retainedFileCountLimit: 100,
-                    rollingInterval: RollingInterval.Minute,
+                    retainedFileCountLimit: 10_000_000,
+                    rollingInterval: RollingInterval.Day,
                     encoding: Encoding.UTF8)
                 .CreateLogger();
-            
+
             services
                 .AddScoped<Form1>()
                 .AddSingleton<TaskService>()

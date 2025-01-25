@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using FF.Drawing;
 using FF.TasksData;
@@ -29,6 +30,7 @@ public class OptimizedPicking : IPicking
     
     public async Task StartProcess(CancellationTokenSource cts)
     {
+        WarehouseTopology.CurrentPickingType = PickingType.Optimized;
         if (!_topology.Pickers.Any())
         {
             throw new ArgumentException("There are no pickers");
@@ -38,6 +40,8 @@ public class OptimizedPicking : IPicking
         {
             if (cts.IsCancellationRequested)
             {
+                WarehouseTopology.CurrentPickingType = PickingType.None;
+                
                 Log.Information("Stopping [OPTIMIZED]... Pickers` passed cells total: {PassedCells}",
                     _topology.Pickers.Sum(x => x.PassedCells));
                 
@@ -64,7 +68,7 @@ public class OptimizedPicking : IPicking
             foreach (var picker in _topology.Pickers)
             {
                 if(picker.CurrentDestinationCellId is null  // никуда не идет
-                   && picker.CurrentLoadKg != default       // загружен
+                   && picker.CurrentLoadKg > (Consts.PercentOfMaxCarriedWeight / 100) * Consts.PickerMaxCarryWeight      // загружен
                    && picker.TasksQueue is not null         // в очереди нет задач на подбор
                    && !picker.TasksQueue.Any())             // TODO - % т максимального веса
                 {
@@ -82,6 +86,7 @@ public class OptimizedPicking : IPicking
                     
                     Log.Information("PICKER - {PickerCellId}, DROP POINT - {DropPointCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
                     Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
+                    Metrics.IncDropPointVisitsCounter(WarehouseTopology.CurrentPickingType);
                 }
             }
 
@@ -100,6 +105,7 @@ public class OptimizedPicking : IPicking
                 {
                     if (picker.CanCarry(task.Weight))
                     {
+                        Metrics.IncStartedTasksCounter(PickingType.Optimized);
                         picker.CurrentDestinationCellId = task.RackId;
                         picker.CurrentLoadKg += task.Weight;
                         picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
@@ -147,10 +153,17 @@ public class OptimizedPicking : IPicking
         // конец маршрута, расстояние до него будет всегда равно 0
         // https://developers.google.com/optimization/routing/routing_tasks?hl=ru#allowing_arbitrary_start_and_end_locations
         weightDemands.Add(0);
-        pointsForGeneration.Add(new() { CellId = int.MaxValue }); 
-        
+        pointsForGeneration.Add(new() { CellId = int.MaxValue });
+
         var distanceMatrixBetweenPoints = new int[pointsForGeneration.Count, pointsForGeneration.Count];
-        for (int i = 0; i < pointsForGeneration.Count; i++)
+        var sw = new Stopwatch();
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = 6
+        };
+        sw.Start();
+
+        Parallel.For(0, pointsForGeneration.Count, parallelOptions, i =>
         {
             for (int j = 0; j < pointsForGeneration.Count; j++)
             {
@@ -172,8 +185,10 @@ public class OptimizedPicking : IPicking
                 var distance = path.Count == 1 ? 0 : path.Count - pathCoef; //начальная и конечная точки не считаются
                 distanceMatrixBetweenPoints[i, j] = distance;
             }
-        }
-        Log.Information("{@DistanceMatrix}", distanceMatrixBetweenPoints);
+        });
+        sw.Stop();
+        Log.Information($"Elapsed seconds for distance matrix calc {sw.Elapsed.TotalSeconds} | TasksCount {pointsForGeneration.Count}");
+        Metrics.IncMakingDistanceMatrixForOptimizedPickingSecondsElapsedCounter((int)sw.Elapsed.TotalSeconds);
                 
         var pickerStartPoints = Enumerable.Range(0, _topology.Pickers.Count).ToArray();
         var pickerEndPoints = new int[_topology.Pickers.Count].Select(x => pointsForGeneration.Count - 1).ToArray();
@@ -210,18 +225,20 @@ public class OptimizedPicking : IPicking
         var searchParameters = operations_research_constraint_solver.DefaultRoutingSearchParameters();
         searchParameters.FirstSolutionStrategy = FirstSolutionStrategy.Types.Value.PathCheapestArc;
         searchParameters.LocalSearchMetaheuristic = LocalSearchMetaheuristic.Types.Value.GuidedLocalSearch;
-        searchParameters.TimeLimit = new Duration { Seconds = 5 };
+        searchParameters.TimeLimit = new Duration { Seconds = 1 };
 
         var solution = routing.SolveWithParameters(searchParameters);
 
         var (routes, droppedNodes) = GetRoutes(routing, manager, solution);
 
+        var logBuilder = new StringBuilder("Enqueued points for next generation: [");
         foreach (var droppedNode in droppedNodes)
         {
             var taskNode = new TaskNode(pointsForGeneration[droppedNode].CellId, pointsForGeneration[droppedNode].WeightKg!.Value);
             _taskService.TasksQueue.Enqueue(taskNode);
-            Log.Information("Enqueued task at {TaskCellId} and weight {Weight}", taskNode.RackId, taskNode.Weight);
+            logBuilder.Append($"[task at: {taskNode.RackId}, weight: {taskNode.Weight}]");
         }
+        Log.Information(logBuilder.ToString());
 
         for (int i = 0; i < routes.Count; i++)  // маршрут i-ого подборщика
         {

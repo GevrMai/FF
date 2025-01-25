@@ -17,7 +17,7 @@ public record Picker(int Id, int MaxWeight)
     public int TasksDone = 0;
     
     public bool CanCarry(int weightToCarry) => MaxWeight >= CurrentLoadKg + weightToCarry;
-
+    
     public void DoNextStep()
     {
         if (PathToNextTask is null)
@@ -39,6 +39,7 @@ public record Picker(int Id, int MaxWeight)
             return;
         }
         PassedCells++;
+        Metrics.IncPassedCellsCounter(WarehouseTopology.CurrentPickingType);
         PathToNextTask.RemoveAt(0);
         CurrentCellId = PathToNextTask.First();
     }
