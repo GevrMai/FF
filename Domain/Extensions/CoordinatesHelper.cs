@@ -1,4 +1,4 @@
-namespace FF;
+namespace Domain.Extensions;
 
 public static class CoordinatesHelper
 {

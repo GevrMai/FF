@@ -1,4 +1,4 @@
-namespace FF;
+namespace Domain.Models;
 
 public class OptimizedPickingGenerationPoint
 {

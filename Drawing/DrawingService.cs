@@ -1,21 +1,24 @@
-using FF.Picking;
-using FF.WarehouseData;
+using Application.Services;
+using Domain;
+using Domain.Extensions;
+using Domain.Interfaces;
+using Domain.Models;
 
 namespace FF.Drawing;
 
-public class DrawingService
+public class DrawingService : IDrawingService
 {
+    public Bitmap Bitmap;
+    public event EventHandler BitmapChanged;
+    
     private readonly Pen _whitePen;
     private readonly SolidBrush _redBrush;
     private readonly SolidBrush _greenBrush;
     private readonly SolidBrush _yellowBrush;
     private readonly SolidBrush _whiteBrush;
     private readonly Font _font;
-    public Bitmap Bitmap;
     private Graphics _graphics;
-    
-    public event EventHandler BitmapChanged;
-    
+
     public DrawingService()
     {
         _whitePen = new Pen(Color.FromKnownColor(KnownColor.White), 2);
@@ -29,8 +32,13 @@ public class DrawingService
         
         _graphics = Graphics.FromImage(Bitmap);
     }
+
+    public object GetBitmap()
+    {
+        return Bitmap;
+    }
     
-    public Bitmap DrawWarehouse()
+    public object DrawWarehouse()
     {
         var widthPerColumn = Consts.PictureBoxWidth / Consts.ColumnsCount;
         var heightPerRow = Consts.PictureBoxHeight / Consts.RowsCount;
@@ -44,9 +52,9 @@ public class DrawingService
                 var currentXBorder = column * widthPerColumn;
 
                 //нечетные столбцы с 0 - шкафы с товарами
-                // row 0, 11, 22 - проходы
+                // row 0, 13, 26 - проходы
                 // тут - отрисовка шкафов
-                if (WarehouseTopology.ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 22)
+                if (WarehouseTopology.ColumnsWithRacks.Contains(column) && !WarehouseTopology.RowsWithGoThrew.Contains(row))
                 {
                     _graphics.DrawRectangle(_whitePen, currentXBorder, currentYBorder, widthPerColumn, heightPerRow);
                     _graphics.FillEllipse(_redBrush, currentXBorder + widthPerColumn/2, currentYBorder + heightPerRow/2, 10, 10);

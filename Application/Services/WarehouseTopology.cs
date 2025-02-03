@@ -1,29 +1,40 @@
-using FF.Drawing;
-using FF.Picking;
+using Domain;
+using Domain.Enums;
+using Domain.Interfaces;
+using Domain.Models;
 
-namespace FF.WarehouseData;
+namespace Application.Services;
 
 public class WarehouseTopology
 {
-    private readonly DrawingService _drawingService;
+    public static readonly int[,] DistancesMatrix;
+    public static readonly HashSet<int> ColumnsWithRacks = [1, 2, 4, 5, 7, 8, 10, 11];  //indexes
+    public static readonly HashSet<int> RowsWithGoThrew = [0, (Consts.RowsCount-1) / 2, Consts.RowsCount - 1];  //indexes
+    public static readonly List<(int row, int column)> DropPointsCoordinates = [
+        (0, 0),
+        (Consts.RowsCount - 1, Consts.ColumnsCount - 1)
+    ];
     public List<Picker> Pickers;
-    private readonly Random _rnd;
-
-    private readonly int _distancesMatrixDim = Consts.RowsCount * Consts.ColumnsCount;
-
-    private readonly WarehouseNode[,] _topology;
-    public readonly int[,] DistancesMatrix;
-
-    public static readonly HashSet<int> ColumnsWithRacks = [1, 2, 4, 5, 7, 8];
-    public static readonly List<(int row, int column)> DropPointsCoordinates = new() { (0, 0), (Consts.RowsCount - 1, Consts.ColumnsCount - 1) };
-
     public static PickingType CurrentPickingType = PickingType.None;
     
-    public WarehouseTopology(DrawingService drawingService)
+    private readonly IDrawingService _drawingService;
+    private readonly ISnapshotSaver _snapshotSaver;
+    private readonly WarehouseNode[,] _topology;
+    private readonly Random _rnd;
+    
+    private const int DistancesMatrixDim = Consts.RowsCount * Consts.ColumnsCount;
+    private const bool UserPickersFromSnapshot = false;
+
+    static WarehouseTopology()
+    {
+        DistancesMatrix = new int[DistancesMatrixDim, DistancesMatrixDim];
+    }
+    
+    public WarehouseTopology(IDrawingService drawingService, ISnapshotSaver snapshotSaver)
     {
         _drawingService = drawingService;
+        _snapshotSaver = snapshotSaver;
         
-        DistancesMatrix = new int[_distancesMatrixDim, _distancesMatrixDim];
         _topology = new WarehouseNode[Consts.RowsCount, Consts.ColumnsCount];
         _rnd = new Random();
         
@@ -127,13 +138,18 @@ public class WarehouseTopology
     
     public static bool CellIsRack(int row, int column)
     {
-        return ColumnsWithRacks.Contains(column) && row != 0 && row != 11 && row != 22;
+        return ColumnsWithRacks.Contains(column) && !RowsWithGoThrew.Contains(row);
     }
     
     private void WithPickersCount(int count)
     {
+        if (UserPickersFromSnapshot)
+        {
+            GetPickersFromSnapshot().GetAwaiter().GetResult();
+            return;
+        }
+        
         Pickers = new List<Picker>(count);
-
         var emptyCellsIds = GetEmptyCells().ToList();
         
         for (int i = 1; i <= count; i++)
@@ -147,6 +163,32 @@ public class WarehouseTopology
                     Coordinates = new(cell.xCenter, cell.yCenter)
                 } );
             _drawingService.DrawText(i.ToString(), cell.xCenter + 10, cell.yCenter - 5);
+        }
+
+        _snapshotSaver.SavePickersPositions(Pickers
+            .Select(x => new PickerToSaveSnapshot(
+                Id: x.Id,
+                MaxWeight: x.MaxWeight,
+                CurrentCellId: x.CurrentCellId,
+                X: x.Coordinates.X,
+                Y: x.Coordinates.Y))
+            .ToList());
+    }
+
+    private async Task GetPickersFromSnapshot()
+    {
+        var dataFromSnapshot = _snapshotSaver.GetPickersFromSnapshot();
+        Pickers = new List<Picker>();
+        int i = 1;
+        await foreach (var picker in dataFromSnapshot)
+        {
+            Pickers.Add(new Picker(Id: picker.Id, MaxWeight: picker.MaxWeight)
+            {
+                CurrentCellId = picker.CurrentCellId,
+                Coordinates = (picker.X, picker.Y)
+            });
+            _drawingService.DrawText(i.ToString(), picker.X + 10, picker.Y - 5);
+            i++;
         }
     }
 
@@ -163,8 +205,8 @@ public class WarehouseTopology
             }
         }
     }
-    
-    public IEnumerable<(int cellId, int xCenter, int yCenter)> GetEmptyCells()
+
+    private IEnumerable<(int cellId, int xCenter, int yCenter)> GetEmptyCells()
     {
         for (int row = 0; row < Consts.RowsCount; row++)
         {
