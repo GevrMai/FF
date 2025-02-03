@@ -1,31 +1,37 @@
 using System.Diagnostics;
 using System.Text;
-using FF.Drawing;
-using FF.TasksData;
-using FF.WarehouseData;
+using Application.Helpers;
+using Domain;
+using Domain.Enums;
+using Domain.Extensions;
+using Domain.Interfaces;
+using Domain.Models;
 using Google.OrTools.ConstraintSolver;
 using Google.Protobuf.WellKnownTypes;
 using Serilog;
 
-namespace FF.Picking;
+namespace Application.Services;
 
 public class OptimizedPicking : IPicking
 {
-    private readonly DrawingService _drawingService;
-    private readonly TaskService _taskService;
+    private readonly IDrawingService _drawingService;
+    private readonly ITaskService _taskService;
     private readonly WarehouseTopology _topology;
-    private readonly PathFinder _pathFinder;
+    //private readonly PathFinder _pathFinder;
+    private readonly IMetricService _metricService;
     
     public OptimizedPicking(
-        DrawingService drawingService,
-        TaskService taskService,
+        IDrawingService drawingService,
+        ITaskService taskService,
         WarehouseTopology topology,
-        PathFinder pathFinder)
+        //PathFinder pathFinder,
+        IMetricService metricService)
     {
         _drawingService = drawingService;
         _taskService = taskService;
         _topology = topology;
-        _pathFinder = pathFinder;
+        //_pathFinder = pathFinder;
+        _metricService = metricService;
     }
     
     public async Task StartProcess(CancellationTokenSource cts)
@@ -67,32 +73,36 @@ public class OptimizedPicking : IPicking
             
             foreach (var picker in _topology.Pickers)
             {
+                var maxLoadToParticipateInGenerationKg =
+                    ((double)Consts.PercentOfMaxCarriedWeight / 100.0) * (double)Consts.PickerMaxCarryWeight;
                 if(picker.CurrentDestinationCellId is null  // никуда не идет
-                   && picker.CurrentLoadKg > (Consts.PercentOfMaxCarriedWeight / 100) * Consts.PickerMaxCarryWeight      // загружен
+                   && picker.CurrentLoadKg > maxLoadToParticipateInGenerationKg      // загружен
                    && picker.TasksQueue is not null         // в очереди нет задач на подбор
-                   && !picker.TasksQueue.Any())             // TODO - % т максимального веса
+                   && !picker.TasksQueue.Any())
                 {
+                    Log.Information($"CurrentLoad is {picker.CurrentLoadKg} which is bigger than {maxLoadToParticipateInGenerationKg}");
+                    
                     var firstDropPointId = CoordinatesHelper.GetCellId(WarehouseTopology.DropPointsCoordinates.First().row,
                         WarehouseTopology.DropPointsCoordinates.First().column);
                     var secondDropPointId = CoordinatesHelper.GetCellId(WarehouseTopology.DropPointsCoordinates.Last().row,
                         WarehouseTopology.DropPointsCoordinates.Last().column);
 
-                    var pathToFirstDropPoint = _pathFinder.FindShortestPath(picker.CurrentCellId, firstDropPointId);
+                    var pathToFirstDropPoint = PathFinder.FindShortestPath(picker.CurrentCellId, firstDropPointId);
                         
-                    var pathToSecondDropPoint = _pathFinder.FindShortestPath(picker.CurrentCellId, secondDropPointId);
+                    var pathToSecondDropPoint = PathFinder.FindShortestPath(picker.CurrentCellId, secondDropPointId);
 
-                    _pathFinder.ChooseDropPoint(pathToFirstDropPoint, pathToSecondDropPoint, picker, firstDropPointId, secondDropPointId);
+                    PathFinder.ChooseDropPoint(pathToFirstDropPoint, pathToSecondDropPoint, picker, firstDropPointId, secondDropPointId);
                     picker.DestinationType = DestinationType.DropPoint;
                     
                     Log.Information("PICKER - {PickerCellId}, DROP POINT - {DropPointCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
                     Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
-                    Metrics.IncDropPointVisitsCounter(WarehouseTopology.CurrentPickingType);
+                    _metricService.IncDropPointVisitsCounter(WarehouseTopology.CurrentPickingType);
                 }
             }
 
             if (allPickersAreFree)
             {
-                if (!_taskService.TasksQueue.Any())
+                if (!_taskService.HasTasks())
                 {
                     continue;
                 }
@@ -105,15 +115,18 @@ public class OptimizedPicking : IPicking
                 {
                     if (picker.CanCarry(task.Weight))
                     {
-                        Metrics.IncStartedTasksCounter(PickingType.Optimized);
+                        _metricService.IncStartedTasksCounter(WarehouseTopology.CurrentPickingType);
                         picker.CurrentDestinationCellId = task.RackId;
                         picker.CurrentLoadKg += task.Weight;
-                        picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
+                        picker.PathToNextTask = PathFinder.FindShortestPath(picker);
                         picker.DestinationType = DestinationType.RackCell;
                     }
                 }
 
-                picker.DoNextStep();
+                if (picker.DoNextStep())
+                {
+                    _metricService.IncPassedCellsCounter(WarehouseTopology.CurrentPickingType);
+                }
             }
 
             await _drawingService.DrawNextStep(_topology.Pickers);
@@ -122,9 +135,10 @@ public class OptimizedPicking : IPicking
 
     private void GenerateOptimizedSolution()
     {
-        var pointsForGeneration = new List<OptimizedPickingGenerationPoint>(_taskService.TasksQueue.Count);
-        var weightDemands = new List<long>(_taskService.TasksQueue.Count + _topology.Pickers.Count + 1); // 1 - конечное депо
-        var vehicleCapacities = new List<long>(_taskService.TasksQueue.Count + _topology.Pickers.Count);
+        var tasksInQueueCount = _taskService.GetTasksInQueueCount();
+        var pointsForGeneration = new List<OptimizedPickingGenerationPoint>(tasksInQueueCount);
+        var weightDemands = new List<long>(tasksInQueueCount + _topology.Pickers.Count + 1); // 1 - конечное депо
+        var vehicleCapacities = new List<long>(tasksInQueueCount + _topology.Pickers.Count);
         
         foreach (var picker in _topology.Pickers)
         {
@@ -139,11 +153,11 @@ public class OptimizedPicking : IPicking
         Log.Information("Pickers are at: {PickerCellIds}", string.Join(" ", _topology.Pickers.Select(x => x.CurrentCellId)));
 
         var tasksLog = new StringBuilder("Tasks are at: ");
-        while (_taskService.TasksQueue.TryDequeue(out var task))
+        while (_taskService.TryDequeue(out var task))
         {
             pointsForGeneration.Add(new()
             {
-                CellId = task.RackId, WeightKg = task.Weight
+                CellId = task!.RackId, WeightKg = task.Weight
             });
             weightDemands.Add(task.Weight);
             tasksLog.Append($"{task.RackId} ");
@@ -173,7 +187,7 @@ public class OptimizedPicking : IPicking
                     continue;
                 }
                         
-                var path = _pathFinder.FindShortestPath(pointsForGeneration[i].CellId, pointsForGeneration[j].CellId);
+                var path = PathFinder.FindShortestPath(pointsForGeneration[i].CellId, pointsForGeneration[j].CellId);
 
                 var (fromPoint, toPoint) =
                     (CoordinatesHelper.GetCellRowAndColumn(pointsForGeneration[i].CellId), CoordinatesHelper.GetCellRowAndColumn(pointsForGeneration[j].CellId));
@@ -188,7 +202,7 @@ public class OptimizedPicking : IPicking
         });
         sw.Stop();
         Log.Information($"Elapsed seconds for distance matrix calc {sw.Elapsed.TotalSeconds} | TasksCount {pointsForGeneration.Count}");
-        Metrics.IncMakingDistanceMatrixForOptimizedPickingSecondsElapsedHistogram(sw.Elapsed.TotalSeconds);
+        _metricService.IncMakingDistanceMatrixSecondsElapsedHistogram(sw.Elapsed.TotalSeconds);
                 
         var pickerStartPoints = Enumerable.Range(0, _topology.Pickers.Count).ToArray();
         var pickerEndPoints = new int[_topology.Pickers.Count].Select(x => pointsForGeneration.Count - 1).ToArray();
@@ -235,7 +249,7 @@ public class OptimizedPicking : IPicking
         foreach (var droppedNode in droppedNodes)
         {
             var taskNode = new TaskNode(pointsForGeneration[droppedNode].CellId, pointsForGeneration[droppedNode].WeightKg!.Value);
-            _taskService.TasksQueue.Enqueue(taskNode);
+            _taskService.Enqueue(taskNode);
             logBuilder.Append($"[task at: {taskNode.RackId}, weight: {taskNode.Weight}]");
         }
         Log.Information(logBuilder.ToString());

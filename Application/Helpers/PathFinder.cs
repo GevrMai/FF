@@ -1,21 +1,15 @@
-using FF.WarehouseData;
+using Application.Services;
+using Domain.Models;
 
-namespace FF.Picking;
+namespace Application.Helpers;
 
-public class PathFinder
+public static class PathFinder
 {
-    private readonly WarehouseTopology _topology;
-
-    public PathFinder(WarehouseTopology topology)
+    public static List<int> FindShortestPath(Picker picker)
     {
-        _topology = topology;
-    }
-    
-    public List<int> FindShortestPath(Picker picker)
-    {
-        var distances = new int[_topology.DistancesMatrix.GetLength(0)];
-        var previous = new int?[_topology.DistancesMatrix.GetLength(0)];
-        var visited = new bool[_topology.DistancesMatrix.GetLength(0)];
+        var distances = new int[WarehouseTopology.DistancesMatrix.GetLength(0)];
+        var previous = new int?[WarehouseTopology.DistancesMatrix.GetLength(0)];
+        var visited = new bool[WarehouseTopology.DistancesMatrix.GetLength(0)];
         var queue = new PriorityQueue<int, int>();
 
         distances[picker.CurrentCellId] = 0;
@@ -30,11 +24,11 @@ public class PathFinder
 
             visited[currentCellId] = true;
 
-            for (int i = 0; i < _topology.DistancesMatrix.GetLength(0); i++)
+            for (int i = 0; i < WarehouseTopology.DistancesMatrix.GetLength(0); i++)
             {
-                if (!visited[i] && _topology.DistancesMatrix[currentCellId, i] != 0)
+                if (!visited[i] && WarehouseTopology.DistancesMatrix[currentCellId, i] != 0)
                 {
-                    var distanceToNeighbor = distances[currentCellId] + _topology.DistancesMatrix[currentCellId, i];
+                    var distanceToNeighbor = distances[currentCellId] + WarehouseTopology.DistancesMatrix[currentCellId, i];
 
                     if (distanceToNeighbor < distances[i] || distances[i] == 0)
                     {
@@ -49,11 +43,11 @@ public class PathFinder
         return ReconstructPath(previous, picker.CurrentDestinationCellId);
     }
     
-    public List<int> FindShortestPath(int from, int to)
+    public static List<int> FindShortestPath(int from, int to)
     {
-        var distances = new int[_topology.DistancesMatrix.GetLength(0)];
-        var previous = new int?[_topology.DistancesMatrix.GetLength(0)];
-        var visited = new bool[_topology.DistancesMatrix.GetLength(0)];
+        var distances = new int[WarehouseTopology.DistancesMatrix.GetLength(0)];
+        var previous = new int?[WarehouseTopology.DistancesMatrix.GetLength(0)];
+        var visited = new bool[WarehouseTopology.DistancesMatrix.GetLength(0)];
         var queue = new PriorityQueue<int, int>();
 
         distances[from] = 0;
@@ -68,11 +62,11 @@ public class PathFinder
 
             visited[currentCellId] = true;
 
-            for (int i = 0; i < _topology.DistancesMatrix.GetLength(0); i++)
+            for (int i = 0; i < WarehouseTopology.DistancesMatrix.GetLength(0); i++)
             {
-                if (!visited[i] && _topology.DistancesMatrix[currentCellId, i] != 0)
+                if (!visited[i] && WarehouseTopology.DistancesMatrix[currentCellId, i] != 0)
                 {
-                    var distanceToNeighbor = distances[currentCellId] + _topology.DistancesMatrix[currentCellId, i];
+                    var distanceToNeighbor = distances[currentCellId] + WarehouseTopology.DistancesMatrix[currentCellId, i];
 
                     if (distanceToNeighbor < distances[i] || distances[i] == 0)
                     {
@@ -87,7 +81,7 @@ public class PathFinder
         return ReconstructPath(previous, to);
     }
     
-    public void ChooseDropPoint(List<int> pathToFirstDropPoint, List<int> pathToSecondDropPoint, Picker picker,
+    public static void ChooseDropPoint(List<int> pathToFirstDropPoint, List<int> pathToSecondDropPoint, Picker picker,
         int firstDropPointId, int secondDropPointId)
     {
         if (pathToFirstDropPoint.Count < pathToSecondDropPoint.Count)
@@ -101,7 +95,7 @@ public class PathFinder
         picker.PathToNextTask = pathToSecondDropPoint;
     }
 
-    private List<int> ReconstructPath(int?[] previous, int? targetCellId)
+    private static List<int> ReconstructPath(int?[] previous, int? targetCellId)
     {
         var path = new List<int>();
         var current = targetCellId;

@@ -1,27 +1,32 @@
-using FF.Drawing;
-using FF.TasksData;
-using FF.WarehouseData;
+using Application.Helpers;
+using Domain.Enums;
+using Domain.Extensions;
+using Domain.Interfaces;
+using Domain.Models;
 using Serilog;
 
-namespace FF.Picking;
+namespace Application.Services;
 
-public class DefaultPicking : IPicking  //TODO если подборщик свободен и нету задачек - идти на сброс
+public class DefaultPicking : IPicking
 {
-    private readonly DrawingService _drawingService;
-    private readonly TaskService _taskService;
+    private readonly IDrawingService _drawingService;
+    private readonly ITaskService _taskService;
     private readonly WarehouseTopology _topology;
-    private readonly PathFinder _pathFinder;
+    //private readonly PathFinder _pathFinder;
+    private readonly IMetricService _metricService;
     
     public DefaultPicking(
-        DrawingService drawingService,
-        TaskService taskService,
+        IDrawingService drawingService,
+        ITaskService taskService,
         WarehouseTopology topology,
-        PathFinder pathFinder)
+        //PathFinder pathFinder,
+        IMetricService metricService)
     {
         _drawingService = drawingService;
         _taskService = taskService;
         _topology = topology;
-        _pathFinder = pathFinder;
+        //_pathFinder = pathFinder;
+        _metricService = metricService;
     }
 
     public async Task StartProcess(CancellationTokenSource cts)
@@ -54,16 +59,16 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
             {
                 if (picker.CurrentDestinationCellId is null)
                 {
-                    _taskService.TasksQueue.TryDequeue(out TaskNode task);
+                    _taskService.TryDequeue(out var task);
 
                     if (task is not null && picker.CanCarry(task.Weight))
                     {
                         picker.CurrentDestinationCellId = task.RackId;
                         picker.CurrentLoadKg += task.Weight;
-                        picker.PathToNextTask = _pathFinder.FindShortestPath(picker);
+                        picker.PathToNextTask = PathFinder.FindShortestPath(picker);
                         picker.DestinationType = DestinationType.RackCell;
                         
-                        Metrics.IncStartedTasksCounter(PickingType.Default);
+                        _metricService.IncStartedTasksCounter(WarehouseTopology.CurrentPickingType);
                         
                         Log.Information("PICKER - {PickerCellId} | TASK - {TaskCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
                         Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
@@ -73,7 +78,7 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                     {
                         if (task is not null)
                         {
-                            _taskService.TasksQueue.Enqueue(task);  // обратно в очередь
+                            _taskService.Enqueue(task);  // обратно в очередь
                             Log.Information("task with load {Weight} and id {TaskCellId} is returned in queue", task.Weight, task.RackId);
                         }
                         
@@ -82,21 +87,24 @@ public class DefaultPicking : IPicking  //TODO если подборщик св�
                         var secondDropPointId = CoordinatesHelper.GetCellId(WarehouseTopology.DropPointsCoordinates.Last().row,
                                                                 WarehouseTopology.DropPointsCoordinates.Last().column);
 
-                        var pathToFirstDropPoint = _pathFinder.FindShortestPath(picker.CurrentCellId, firstDropPointId);
+                        var pathToFirstDropPoint = PathFinder.FindShortestPath(picker.CurrentCellId, firstDropPointId);
                         
-                        var pathToSecondDropPoint = _pathFinder.FindShortestPath(picker.CurrentCellId, secondDropPointId);
+                        var pathToSecondDropPoint = PathFinder.FindShortestPath(picker.CurrentCellId, secondDropPointId);
 
-                        _pathFinder.ChooseDropPoint(pathToFirstDropPoint, pathToSecondDropPoint, picker, firstDropPointId, secondDropPointId);
+                        PathFinder.ChooseDropPoint(pathToFirstDropPoint, pathToSecondDropPoint, picker, firstDropPointId, secondDropPointId);
                         picker.DestinationType = DestinationType.DropPoint;
                         
                         Log.Information("PICKER - {PickerCellId}, DROP POINT - {DropPointCellId}", picker.CurrentCellId, picker.CurrentDestinationCellId);
                         Log.Information($"PATH: {string.Join(", ", picker.PathToNextTask)}");
                         
-                        Metrics.IncDropPointVisitsCounter(WarehouseTopology.CurrentPickingType);
+                        _metricService.IncDropPointVisitsCounter(WarehouseTopology.CurrentPickingType);
                     }
                 }
                 
-                picker.DoNextStep();
+                if (picker.DoNextStep())
+                {
+                    _metricService.IncPassedCellsCounter(WarehouseTopology.CurrentPickingType);
+                }
             }
 
             await _drawingService.DrawNextStep(_topology.Pickers);

@@ -1,7 +1,7 @@
-using FF.TasksData;
-using FF.WarehouseData;
+using Domain.Enums;
+using Domain.Interfaces;
 
-namespace FF.Picking;
+namespace Domain.Models;
 
 public record Picker(int Id, int MaxWeight)
 {
@@ -18,11 +18,11 @@ public record Picker(int Id, int MaxWeight)
     
     public bool CanCarry(int weightToCarry) => MaxWeight >= CurrentLoadKg + weightToCarry;
     
-    public void DoNextStep()
+    public bool DoNextStep()
     {
         if (PathToNextTask is null)
         {
-            return;
+            return false;
         }
         if (PathToNextTask.Count == 2) // конечная точка достигнута
         {
@@ -36,11 +36,11 @@ public record Picker(int Id, int MaxWeight)
             }
             CurrentDestinationCellId = default;
             PathToNextTask = default;
-            return;
+            return false;
         }
         PassedCells++;
-        Metrics.IncPassedCellsCounter(WarehouseTopology.CurrentPickingType);
         PathToNextTask.RemoveAt(0);
         CurrentCellId = PathToNextTask.First();
+        return true;
     }
 }

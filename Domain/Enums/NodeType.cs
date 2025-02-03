@@ -1,4 +1,4 @@
-namespace FF.WarehouseData;
+namespace Domain.Enums;
 
 public enum NodeType
 {

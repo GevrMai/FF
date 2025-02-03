@@ -35,6 +35,9 @@
             DelayTextBox = new TextBox();
             StatusLabel = new Label();
             WarehousePictureBox = new PictureBox();
+            label1 = new Label();
+            GenerationsCountLabel = new Label();
+            TasksInQueueCountLabel = new Label();
             ((System.ComponentModel.ISupportInitialize)WarehousePictureBox).BeginInit();
             SuspendLayout();
             // 
@@ -125,12 +128,42 @@
             WarehousePictureBox.TabIndex = 7;
             WarehousePictureBox.TabStop = false;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(803, 62);
+            label1.Name = "label1";
+            label1.Size = new Size(177, 46);
+            label1.TabIndex = 8;
+            label1.Text = "Генерация:\r\nЗадач в очереди:";
+            // 
+            // GenerationsCountLabel
+            // 
+            GenerationsCountLabel.AutoSize = true;
+            GenerationsCountLabel.Location = new Point(924, 62);
+            GenerationsCountLabel.Name = "GenerationsCountLabel";
+            GenerationsCountLabel.Size = new Size(41, 23);
+            GenerationsCountLabel.TabIndex = 9;
+            GenerationsCountLabel.Text = "0/0";
+            // 
+            // TasksInQueueCountLabel
+            // 
+            TasksInQueueCountLabel.AutoSize = true;
+            TasksInQueueCountLabel.Location = new Point(986, 85);
+            TasksInQueueCountLabel.Name = "TasksInQueueCountLabel";
+            TasksInQueueCountLabel.Size = new Size(21, 23);
+            TasksInQueueCountLabel.TabIndex = 10;
+            TasksInQueueCountLabel.Text = "0";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(11F, 23F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.MidnightBlue;
             ClientSize = new Size(2544, 1401);
+            Controls.Add(TasksInQueueCountLabel);
+            Controls.Add(GenerationsCountLabel);
+            Controls.Add(label1);
             Controls.Add(WarehousePictureBox);
             Controls.Add(StatusLabel);
             Controls.Add(DelayTextBox);
@@ -159,5 +192,8 @@
         private TextBox DelayTextBox;
         private Label StatusLabel;
         private PictureBox WarehousePictureBox;
+        private Label label1;
+        private Label GenerationsCountLabel;
+        private Label TasksInQueueCountLabel;
     }
 }

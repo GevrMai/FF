@@ -1,4 +1,4 @@
-namespace FF.Picking;
+namespace Domain.Enums;
 
 public enum DestinationType
 {

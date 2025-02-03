@@ -1,4 +1,4 @@
-namespace FF.Picking;
+namespace Domain.Interfaces;
 
 public interface IPicking
 {

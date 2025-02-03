@@ -1,14 +1,13 @@
 using System.Text;
+using Application;
+using Domain.Interfaces;
 using FF.Drawing;
-using FF.Picking;
-using FF.TasksData;
-using FF.WarehouseData;
+using Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Serilog;
 using Serilog.Formatting.Json;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace FF
 {
@@ -32,7 +31,7 @@ namespace FF
             ConfigureServices(services); 
             
             using ServiceProvider serviceProvider = services.BuildServiceProvider();
-            Application.Run(
+            System.Windows.Forms.Application.Run(
                 serviceProvider.GetRequiredService<Form1>()
                 );  
         }
@@ -46,18 +45,16 @@ namespace FF
                     path: "logs.txt",
                     formatter: new JsonFormatter(),
                     retainedFileCountLimit: 10_000_000,
-                    rollingInterval: RollingInterval.Day,
+                    rollingInterval: RollingInterval.Minute,
                     encoding: Encoding.UTF8)
                 .CreateLogger();
 
+            services.AddServices();
+            services.AddInfrastructure();
+
             services
                 .AddScoped<Form1>()
-                .AddSingleton<TaskService>()
-                .AddSingleton<WarehouseTopology>()
-                .AddSingleton<DrawingService>()
-                .AddSingleton<DefaultPicking>()
-                .AddSingleton<OptimizedPicking>()
-                .AddSingleton<PathFinder>();
+                .AddSingleton<IDrawingService, DrawingService>();
         }
     }
 }

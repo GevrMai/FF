@@ -1,39 +1,32 @@
-using FF.Drawing;
-using FF.Picking;
-using FF.TasksData;
-using FF.WarehouseData;
-using Microsoft.VisualBasic.Logging;
-using Log = Serilog.Log;
+using Application.Services;
+using Domain;
+using Domain.Interfaces;
 
 namespace FF
 {
     public partial class Form1 : Form
     {
-        private readonly TaskService _taskService;
-        private readonly WarehouseTopology _topology;
-        private readonly DrawingService _drawingService;
-        private readonly DefaultPicking _defaultPicking;
-        private readonly OptimizedPicking _optimizedPicking;
+        private readonly ITaskService _taskService;
+        private readonly IDrawingService _drawingService;
+        private readonly IPicking _defaultPicking;
+        private readonly IPicking _optimizedPicking;
 
         private CancellationTokenSource _ctsDefault;
         private CancellationTokenSource _ctsOptimized;
         public Form1(
-            TaskService taskService,
-            WarehouseTopology topology,
-            DrawingService drawingService,
-            DefaultPicking defaultPicking,
-            OptimizedPicking optimizedPicking)
+            ITaskService taskService,
+            IDrawingService drawingService,
+            IEnumerable<IPicking> pickingServices)
         {
             _taskService = taskService;
-            _topology = topology;
             _drawingService = drawingService;
             
-            _defaultPicking = defaultPicking;
-            _optimizedPicking = optimizedPicking;
+            _defaultPicking = pickingServices.Single(x => x.GetType() == typeof(DefaultPicking));
+            _optimizedPicking = pickingServices.Single(x => x.GetType() == typeof(OptimizedPicking));
             
             InitializeComponent();
             
-            WarehousePictureBox.Image = _drawingService.DrawWarehouse();
+            WarehousePictureBox.Image = (Bitmap)_drawingService.DrawWarehouse();
 
             _ctsDefault = new();
             _ctsOptimized = new();
@@ -55,17 +48,27 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(
+                _taskService.GetTasks(
                     Consts.TasksCountPerBatch,
                     Consts.NumberOfBatches,
                     Consts.MaxWeightOfTaskKg,
                     Consts.DelayBetweenBatchesSeconds,
-                    _ctsDefault);
+                    GenerationsCountLabel,
+                    _ctsDefault.Token);
             });
 
             Task.Run(() =>
             {
                 _optimizedPicking.StartProcess(_ctsOptimized);
+            });
+
+            Task.Run(async () =>
+            {
+                while (!_ctsOptimized.IsCancellationRequested)
+                {
+                    TasksInQueueCountLabel.Text = _taskService.GetTasksInQueueCount().ToString();
+                    await Task.Delay(TimeSpan.FromMilliseconds(500));   
+                }
             });
         }
 
@@ -80,17 +83,27 @@ namespace FF
             
             Task.Run(() =>
             {
-                _taskService.GenerateTasks(
+                _taskService.GetTasks(
                     Consts.TasksCountPerBatch,
                     Consts.NumberOfBatches,
                     Consts.MaxWeightOfTaskKg,
-                    Consts.DelayBetweenBatchesSeconds,
-                    _ctsOptimized);
+                    Consts.DelayBetweenBatchesSeconds, 
+                    GenerationsCountLabel,
+                    _ctsOptimized.Token);
             });
             
             Task.Run(() =>
             {
                 _defaultPicking.StartProcess(_ctsDefault);
+            });
+
+            Task.Run(async () =>
+            {
+                while (!_ctsDefault.IsCancellationRequested)
+                {
+                    TasksInQueueCountLabel.Text = _taskService.GetTasksInQueueCount().ToString();
+                    await Task.Delay(TimeSpan.FromMilliseconds(500));   
+                }
             });
         }
 
@@ -114,7 +127,7 @@ namespace FF
         
         private void DrawingService_BitmapChanged(object sender, EventArgs e)
         {
-            WarehousePictureBox.Image = _drawingService.Bitmap;
+            WarehousePictureBox.Image = (Bitmap)_drawingService.GetBitmap();
         }
     }
 }
